@@ -1,0 +1,68 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdk 35
+
+    defaultConfig {
+        minSdkVersion 23
+        targetSdkVersion 35
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+//    compileOptions {
+//        encoding "UTF-8"
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    namespace 'com.baofu.downloader'
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.alibaba:fastjson:1.1.70.android'
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+//    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
+//    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
+    implementation "com.arthenica:mobile-ffmpeg-full:4.4"
+//    api "androidx.work:work-runtime:2.8.1"
+
+}
+
+
+
+apply plugin: "maven-publish"
+
+android {
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.github.one-piece-luffy' //groupId
+                artifactId = 'okdownloader'  //仓库名
+                version = '1.0.0' //版本号
+
+            }
+        }
+    }
+}
+
