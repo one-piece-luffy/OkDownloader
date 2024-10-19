@@ -1,9 +1,8 @@
-package com.baofu.downloader.rules;
+package com.baofu.downloader.utils;
 
 import android.content.Context;
 
 import com.baofu.downloader.common.DownloadConstants;
-import com.baofu.downloader.utils.ContextUtils;
 
 public class VideoDownloadConfig {
 

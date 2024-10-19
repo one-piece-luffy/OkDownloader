@@ -1,4 +1,4 @@
-package com.baofu.downloader.rules;
+package com.baofu.downloader.utils;
 
 import android.content.ContentUris;
 import android.content.Context;
@@ -11,7 +11,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
-import com.baofu.downloader.utils.ContextUtils;
+import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.File;
 import java.io.IOException;

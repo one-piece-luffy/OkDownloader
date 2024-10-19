@@ -18,7 +18,7 @@ import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.MimeType;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.VideoDownloadUtils;
-import com.baofu.downloader.rules.VideoStorageUtils;
+import com.baofu.downloader.utils.VideoStorageUtils;
 
 import org.jetbrains.annotations.NotNull;
 

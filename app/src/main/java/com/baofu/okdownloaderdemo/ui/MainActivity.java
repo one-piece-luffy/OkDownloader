@@ -14,7 +14,7 @@ import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.service.DownloadService;
-import com.baofu.downloader.rules.UniqueIdGenerator;
+import com.baofu.downloader.utils.UniqueIdGenerator;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
 
