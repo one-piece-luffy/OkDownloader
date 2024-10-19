@@ -6,7 +6,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.baofu.downloader.rules.VideoDownloadManager;
-import com.baofu.downloader.common.DownloadConstants;
+import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.factory.Android10FastFactory;
 import com.baofu.downloader.factory.Android9Factory;
 import com.baofu.downloader.factory.IDownloadFactory;
@@ -99,7 +99,7 @@ public class AllDownloadTask extends VideoDownloadTask {
         e.printStackTrace();
         Log.e("asdf", "error url:" + mTaskItem.getUrl());
         isDownloading = false;
-        mDownloadTaskListener.onTaskProgress(100, mTotalLength, mTotalLength, DownloadConstants.ERROR_SPEED);
+        mDownloadTaskListener.onTaskProgress(100, mTotalLength, mTotalLength, VideoDownloadConstants.ERROR_SPEED);
     }
 
     private void notifyDownloadFinish() {

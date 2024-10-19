@@ -1,7 +1,7 @@
 package com.baofu.downloader.task;
 
 import static android.os.Environment.DIRECTORY_DOWNLOADS;
-import static com.baofu.downloader.common.DownloadConstants.MAX_RETRY_COUNT_503;
+import static com.baofu.downloader.common.VideoDownloadConstants.MAX_RETRY_COUNT_503;
 
 import android.content.Context;
 import android.media.MediaScannerConnection;

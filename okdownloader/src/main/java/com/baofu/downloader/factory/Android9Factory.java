@@ -1,8 +1,8 @@
 package com.baofu.downloader.factory;
 
-import static com.baofu.downloader.common.DownloadConstants.DOWNLOAD_TYPE_ALL;
-import static com.baofu.downloader.common.DownloadConstants.DOWNLOAD_TYPE_RANGE;
-import static com.baofu.downloader.common.DownloadConstants.MAX_RETRY_COUNT_503;
+import static com.baofu.downloader.common.VideoDownloadConstants.DOWNLOAD_TYPE_ALL;
+import static com.baofu.downloader.common.VideoDownloadConstants.DOWNLOAD_TYPE_RANGE;
+import static com.baofu.downloader.common.VideoDownloadConstants.MAX_RETRY_COUNT_503;
 import static com.baofu.downloader.utils.OkHttpUtil.NO_SPACE;
 import static com.baofu.downloader.utils.OkHttpUtil.URL_INVALID;
 import static com.baofu.downloader.utils.VideoDownloadUtils.close;

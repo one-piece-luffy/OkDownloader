@@ -1,6 +1,6 @@
 package com.baofu.downloader.common;
 
-public class DownloadConstants {
+public class VideoDownloadConstants {
 
     public static final int READ_TIMEOUT = 1 * 15 * 1000;
     public static final int CONN_TIMEOUT = 1 * 15 * 1000;

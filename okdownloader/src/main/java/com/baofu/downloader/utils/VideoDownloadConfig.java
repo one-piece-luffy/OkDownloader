@@ -2,7 +2,7 @@ package com.baofu.downloader.utils;
 
 import android.content.Context;
 
-import com.baofu.downloader.common.DownloadConstants;
+import com.baofu.downloader.common.VideoDownloadConstants;
 
 public class VideoDownloadConfig {
 
@@ -35,19 +35,19 @@ public class VideoDownloadConfig {
 
     public int getReadTimeOut(){
         if(readTimeOut==0){
-            return DownloadConstants.READ_TIMEOUT;
+            return VideoDownloadConstants.READ_TIMEOUT;
         }
         return readTimeOut;
     }
     public int getConnTimeOut(){
         if(connTimeOut==0){
-            return DownloadConstants.CONN_TIMEOUT;
+            return VideoDownloadConstants.CONN_TIMEOUT;
         }
         return connTimeOut;
     }
     public int getWriteTimeOut(){
         if(writeTimeOut==0){
-            return DownloadConstants.WRITE_TIMEOUT;
+            return VideoDownloadConstants.WRITE_TIMEOUT;
         }
         return writeTimeOut;
     }
