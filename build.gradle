@@ -4,17 +4,13 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://plugins.gradle.org/m2/'}
-        maven {
-            url 'https://maven.fabric.io/public'
-        }
         maven { url "https://jitpack.io" }
 
 
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.5.2'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10'
+//        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10'
         //jitpack上传
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
 
@@ -28,17 +24,6 @@ allprojects {
         maven {
             url 'https://jitpack.io'
         }
-        maven {
-            url 'https://android-sdk.is.com/'
-        }
-//        maven {
-//            url 'https://maven.google.com/'
-//            name 'Google'
-//        }
-//        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-//        maven { url 'https://maven.aliyun.com/repository/google' }
-//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
-//        maven { url 'https://maven.aliyun.com/repository/jcenter'}
 
     }
 }
