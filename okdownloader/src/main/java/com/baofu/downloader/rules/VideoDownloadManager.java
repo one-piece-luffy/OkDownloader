@@ -32,7 +32,6 @@ import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.LogUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.VideoDownloadUtils;
-import com.baofu.downloader.utils.VideoStorageUtils;
 import com.baofu.downloader.utils.WorkerThreadHandler;
 import com.baofu.downloader.utils.notification.DownloadNotificationUtil;
 import com.baofu.downloader.utils.notification.NotificationBuilderManager;

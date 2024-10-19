@@ -26,7 +26,7 @@ import com.baofu.downloader.utils.FFmpegUtils;
 import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.VideoDownloadUtils;
-import com.baofu.downloader.utils.VideoStorageUtils;
+import com.baofu.downloader.rules.VideoStorageUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
