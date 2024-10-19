@@ -3,8 +3,8 @@ package com.baofu.okdownloaderdemo;
 import android.app.Application;
 import android.os.Environment;
 
-import com.baofu.downloader.VideoDownloadConfig;
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadConfig;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.VideoStorageUtils;
 
 import java.io.File;

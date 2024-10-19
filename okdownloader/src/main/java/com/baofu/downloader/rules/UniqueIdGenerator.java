@@ -1,4 +1,4 @@
-package com.baofu.downloader.utils;
+package com.baofu.downloader.rules;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

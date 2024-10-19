@@ -2,7 +2,7 @@ package com.baofu.downloader.m3u8;
 
 import android.text.TextUtils;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.LogUtils;
 import com.baofu.downloader.utils.OkHttpUtil;

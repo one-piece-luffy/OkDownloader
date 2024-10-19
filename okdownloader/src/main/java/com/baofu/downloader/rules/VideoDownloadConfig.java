@@ -1,4 +1,4 @@
-package com.baofu.downloader;
+package com.baofu.downloader.rules;
 
 import android.content.Context;
 

@@ -5,7 +5,7 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.common.DownloadConstants;
 import com.baofu.downloader.factory.Android10FastFactory;
 import com.baofu.downloader.factory.Android9Factory;

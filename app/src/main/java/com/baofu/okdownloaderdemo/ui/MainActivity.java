@@ -2,25 +2,19 @@ package com.baofu.okdownloaderdemo.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.databinding.DataBindingUtil;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.service.DownloadService;
-import com.baofu.downloader.utils.DownloadConstans;
-import com.baofu.downloader.utils.LogUtils;
-import com.baofu.downloader.utils.UniqueIdGenerator;
+import com.baofu.downloader.rules.UniqueIdGenerator;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
 

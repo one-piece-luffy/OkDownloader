@@ -10,11 +10,9 @@ import static com.baofu.downloader.utils.VideoDownloadUtils.close;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.IFactoryListener;
-import com.baofu.downloader.m3u8.M3U8Seg;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.utils.DownloadExceptionUtils;
 import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.MimeType;
@@ -29,11 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.net.ProtocolException;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -42,8 +36,6 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 

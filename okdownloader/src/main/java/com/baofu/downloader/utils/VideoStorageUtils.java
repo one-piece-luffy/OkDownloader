@@ -11,11 +11,10 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DecimalFormat;
 
 
 public class VideoStorageUtils {

@@ -1,4 +1,4 @@
-package com.baofu.downloader;
+package com.baofu.downloader.rules;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +8,8 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.baofu.downloader.VideoDownloadQueue;
+import com.baofu.downloader.VideoInfoParserManager;
 import com.baofu.downloader.common.DownloadConstants;
 import com.baofu.downloader.database.VideoDownloadDatabaseHelper;
 import com.baofu.downloader.database.VideoDownloadSQLiteHelper;
@@ -42,7 +44,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import okhttp3.Call;
 import okhttp3.Response;
 
 public class VideoDownloadManager {

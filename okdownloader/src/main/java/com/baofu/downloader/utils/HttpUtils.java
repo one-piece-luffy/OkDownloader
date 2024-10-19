@@ -1,28 +1,5 @@
 package com.baofu.downloader.utils;
 
-import android.annotation.SuppressLint;
-import android.net.Uri;
-import android.text.TextUtils;
-
-import com.baofu.downloader.VideoDownloadManager;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.NoRouteToHostException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Map;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
 public class HttpUtils {
 
     private static final String TAG = "HttpUtils";

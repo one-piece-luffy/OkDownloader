@@ -23,7 +23,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.RequiresApi;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.model.Video;
 import com.baofu.downloader.model.VideoTaskItem;
 

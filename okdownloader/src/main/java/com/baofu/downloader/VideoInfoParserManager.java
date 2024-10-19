@@ -9,6 +9,7 @@ import com.baofu.downloader.m3u8.M3U8Seg;
 import com.baofu.downloader.m3u8.M3U8Utils;
 import com.baofu.downloader.model.Video;
 import com.baofu.downloader.model.VideoTaskItem;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.DownloadExceptionUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.VideoDownloadUtils;

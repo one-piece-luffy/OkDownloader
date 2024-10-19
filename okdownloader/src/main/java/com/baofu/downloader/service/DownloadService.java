@@ -11,7 +11,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
-import com.baofu.downloader.VideoDownloadManager;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.utils.notification.NotificationBuilderManager;
 
