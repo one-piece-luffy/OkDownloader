@@ -19,4 +19,7 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-#-keep class com.baofu.downloader.**{*;}
+-keep class com.baofu.downloader.rules.**{*;}
+-keep class com.baofu.downloader.listener.**{*;}
+-keep class com.baofu.downloader.model.**{*;}
+-keep class com.baofu.downloader.model.**{*;}
