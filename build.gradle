@@ -14,19 +14,20 @@ buildscript {
         //jitpack上传
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
 
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url 'https://jitpack.io'
-        }
 
     }
 }
+
+//allprojects {
+//    repositories {
+//        google()
+//        mavenCentral()
+//        maven {
+//            url 'https://jitpack.io'
+//        }
+//
+//    }
+//}
 
 task clean(type: Delete) {
     delete rootProject.buildDir
