@@ -5,7 +5,7 @@ import android.os.Environment;
 
 import com.baofu.downloader.rules.VideoDownloadConfig;
 import com.baofu.downloader.rules.VideoDownloadManager;
-import com.baofu.downloader.utils.VideoStorageUtils;
+import com.baofu.downloader.rules.VideoStorageUtils;
 
 import java.io.File;
 
