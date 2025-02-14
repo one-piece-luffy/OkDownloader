@@ -9,7 +9,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'com.android.tools.build:gradle:8.8.0'
         //jitpack上传
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
 
