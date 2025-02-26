@@ -245,13 +245,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                                 doMergeByFFmpeg();
                             } else {
                                 doMerge();
-                                if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
-                                    copyToAlbum();
-                                }
-                                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
-                                notifyDownloadFinish();
-                                mCurrentCachedSize = VideoStorageUtils.countTotalSize(mSaveDir);
-                                Log.i(TAG, "文件目录大小:" + VideoDownloadUtils.getSizeStr(mCurrentCachedSize));
+
                             }
 
                         } else {
@@ -318,79 +312,30 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
      */
     private void doMerge() {
 
-
+        File localM3U8File = new File(mSaveDir, fileName);
         mTaskItem.suffix = ".mp4";
         fileName = VideoDownloadUtils.getFileNameWithSuffix(mTaskItem);
-        byte[] mMp4Header = null;
         File mergeFile = new File(mSaveDir, fileName);
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(mergeFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        if (fileOutputStream == null) {
-            notifyDownloadError(new Exception());
-            return;
-        }
-        int i = 0;
-        for (M3U8Seg ts : mTsList) {
-            if (ts.failed) {
-                Log.e(TAG, "ts fail");
-                continue;
-            }
-            String tsInitSegmentName = ts.getInitSegmentName();
-            File tsInitSegmentFile = new File(mSaveDir, tsInitSegmentName);
-            File tsFile = new File(mSaveDir, ts.getIndexName());
 
-            if (ts.hasInitSegment() && mMp4Header == null) {
-                mMp4Header = AES128Utils.readFile(tsInitSegmentFile);
-            }
-//            byte[] encryptionKey = ts.encryptionKey == null ? mM3U8.encryptionKey : ts.encryptionKey;
-//            String iv = ts.encryptionKey == null ? mM3U8.encryptionIV : ts.getKeyIV();
-//            if (encryptionKey != null) {
-//                String key=encryptionKey.toString();
-//
-//                try {
-//                    byte[] result = AES128Utils.dencryption(AES128Utils.readFile(tsFile), encryptionKey, iv);
-//                    if (result != null) {
-//                        if (mMp4Header != null) {
-//                            fileOutputStream.write(mMp4Header);
-//                        }
-//                        fileOutputStream.write(result);
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            } else {
-//                try {
-//                    if (mMp4Header != null) {
-//                        fileOutputStream.write(mMp4Header);
-//                    }
-//                    fileOutputStream.write(AES128Utils.readFile(tsFile));
-//                    Log.i(TAG, "count:" + i++);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//            }
 
-            //下载的时候已经解密了，合并的时候无需再解密
-            try {
-                if (mMp4Header != null) {
-                    fileOutputStream.write(mMp4Header);
+
+        FFmpegUtils.doMerge(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), new IFFmpegCallback() {
+            @Override
+            public void onSuc() {
+                if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
+                    copyToAlbum();
                 }
-                fileOutputStream.write(AES128Utils.readFile(tsFile));
-                Log.i(TAG, "count:" + i++);
-            } catch (Exception e) {
-                e.printStackTrace();
+                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
+                notifyDownloadFinish();
+                mCurrentCachedSize = VideoStorageUtils.countTotalSize(mSaveDir);
+                Log.i(TAG, "文件目录大小:" + VideoDownloadUtils.getSizeStr(mCurrentCachedSize));
             }
-        }
-        try {
-            fileOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+            @Override
+            public void onFail() {
+                notifyDownloadError(new Exception());
+            }
+        });
 
     }
 

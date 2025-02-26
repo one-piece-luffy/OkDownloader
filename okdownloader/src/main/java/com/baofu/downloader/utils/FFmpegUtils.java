@@ -79,67 +79,74 @@ public class FFmpegUtils {
      */
     public static void doMerge(String m3u8FilePath, String outputPath, IFFmpegCallback callback) {
 
-
-        byte[] mMp4Header = null;
-        File mergeFile = new File(outputPath);
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(mergeFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        if (fileOutputStream == null) {
-            if (callback != null) {
-                callback.onFail();
-            }
-            return;
-        }
-        try {
-            File m3u8File = new File(m3u8FilePath);
-            M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(m3u8File);
-            if (m3u8.getTsList() == null || m3u8.getTsList().isEmpty()) {
-                if (callback != null) {
-                    callback.onFail();
-                }
-                return;
-            }
-            for (M3U8Seg ts : m3u8.getTsList()) {
-                if (ts.failed) {
-                    continue;
-                }
-                String tsInitSegmentName = ts.getInitSegmentName();
-                File tsInitSegmentFile = new File(m3u8File.getParent(), tsInitSegmentName);
-                File tsFile = new File(m3u8File.getParent(), ts.getIndexName());
-
-                if (ts.hasInitSegment() && mMp4Header == null) {
-                    mMp4Header = AES128Utils.readFile(tsInitSegmentFile);
-                }
-                //下载的时候已经解密了，合并的时候无需再解密
+        DownloadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                byte[] mMp4Header = null;
+                File mergeFile = new File(outputPath);
+                FileOutputStream fileOutputStream = null;
                 try {
-                    if (mMp4Header != null) {
-                        fileOutputStream.write(mMp4Header);
-                    }
-                    fileOutputStream.write(AES128Utils.readFile(tsFile));
-                } catch (Exception e) {
+                    fileOutputStream = new FileOutputStream(mergeFile);
+                } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            if (callback != null) {
-                callback.onFail();
-            }
-            return;
-        }
+                if (fileOutputStream == null) {
+                    if (callback != null) {
+                        callback.onFail();
+                    }
+                    return;
+                }
+                try {
+                    File m3u8File = new File(m3u8FilePath);
+                    M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(m3u8File);
+                    if (m3u8.getTsList() == null || m3u8.getTsList().isEmpty()) {
+                        if (callback != null) {
+                            callback.onFail();
+                        }
+                        return;
+                    }
+                    for (M3U8Seg ts : m3u8.getTsList()) {
+                        if (ts.failed) {
+                            continue;
+                        }
+                        String tsInitSegmentName = ts.getInitSegmentName();
+                        File tsInitSegmentFile = new File(m3u8File.getParent(), tsInitSegmentName);
+                        File tsFile = new File(m3u8File.getParent(), ts.getIndexName());
 
-        try {
-            fileOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (callback != null) {
-            callback.onSuc();
-        }
+                        if (ts.hasInitSegment() && mMp4Header == null) {
+                            mMp4Header = AES128Utils.readFile(tsInitSegmentFile);
+                        }
+                        //下载的时候已经解密了，合并的时候无需再解密
+                        try {
+                            if (mMp4Header != null) {
+                                fileOutputStream.write(mMp4Header);
+                            }
+                            fileOutputStream.write(AES128Utils.readFile(tsFile));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    if (callback != null) {
+                        callback.onFail();
+                    }
+                    return;
+                }finally {
+                    try {
+                        fileOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+                if (callback != null) {
+                    callback.onSuc();
+                }
+            }
+        });
+
 
     }
 
