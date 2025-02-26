@@ -1,7 +1,20 @@
 package com.baofu.downloader.utils;
 
-import com.arthenica.mobileffmpeg.ExecuteCallback;
-import com.arthenica.mobileffmpeg.FFmpeg;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import com.arthenica.ffmpegkit.FFmpegKit;
+import com.arthenica.ffmpegkit.FFmpegKitConfig;
+import com.arthenica.ffmpegkit.FFmpegSession;
+import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback;
+import com.arthenica.ffmpegkit.FFprobeSession;
+import com.arthenica.ffmpegkit.FFprobeSessionCompleteCallback;
+import com.arthenica.ffmpegkit.LogCallback;
+import com.arthenica.ffmpegkit.ReturnCode;
+import com.arthenica.ffmpegkit.SessionState;
+import com.arthenica.ffmpegkit.Statistics;
+import com.arthenica.ffmpegkit.StatisticsCallback;
 import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.m3u8.M3U8Seg;
@@ -20,26 +33,37 @@ public class FFmpegUtils {
 
 
         // 构建FFmpeg命令
-        String[] command = new String[]{"-i", m3u8FilePath, "-c", "copy", outputPath};
+        String command = "-i '"+m3u8FilePath+ "' -c copy '" +outputPath+"'";
+//        Log.e("asdf", "ffmeg command: "+command);
+
 
         try {
             // 执行FFmpeg命令
-            FFmpeg.executeAsync(command, (executionId, returnCode) -> {
-                if (returnCode == 0) {
-                    // 命令执行成功
-                    if (callback != null) {
-                        callback.onSuc();
-                    }
-                } else {
-                    // 命令执行失败
+            FFmpegKit.executeAsync(command, new FFmpegSessionCompleteCallback() {
+
+                @Override
+                public void apply(FFmpegSession session) {
+                    SessionState state = session.getState();
+                    ReturnCode returnCode = session.getReturnCode();
+//                    Log.e("asdf", String.format("============FFmpeg process exited with state %s and rc %s.%s", state, returnCode, session.getFailStackTrace()));
+
+                    if (returnCode.isValueSuccess()) {
+                        // 命令执行成功
+                        if (callback != null) {
+                            callback.onSuc();
+                        }
+                    } else {
+                        // 命令执行失败
 //                    if (callback != null) {
 //                        callback.onFail();
 //                    }
 //                    notifyDownloadError(new Exception("m3u8合并失败"));
-                    doMerge(m3u8FilePath, outputPath, callback);
+                        doMerge(m3u8FilePath, outputPath, callback);
+
+                    }
+                    // CALLED WHEN SESSION IS EXECUTED
 
                 }
-
             });
 
         } catch (Exception e) {

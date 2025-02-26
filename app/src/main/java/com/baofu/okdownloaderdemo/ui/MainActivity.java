@@ -18,9 +18,12 @@ import com.baofu.downloader.utils.UniqueIdGenerator;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding dataBinding;
-    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+    String link="https://www.tiktok.com/aweme/v1/play/?faid=1988&file_id=1258763e907d4c6f9ca6de626ce9741c&is_play_url=1&item_id=7441887850984934678&line=0&ply_type=2&signaturev3=dmlkZW9faWQ7ZmlsZV9pZDtpdGVtX2lkLmE3Y2M4MjYyNmJjZTk1NDJkYzk4NDE0NTA2YWExYmM5&tk=tt_chain_token&video_id=v24044gl0000ct3eaenog65smrt9flbg";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
 
                 item.setFileName(item.mName);
                 item.overwrite = false;
+                Map<String,String> header=new HashMap<>();
+//                header.put("Range","bytes=0-14188543");
+                header.put("referer",link);
+                item.header=header;
 
                 //启动前台服务下载
                 //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改

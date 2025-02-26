@@ -130,57 +130,63 @@ public class Android9Factory implements IDownloadFactory {
             // 发起请求，从响应头获取文件信息
 //            Response response = OkHttpUtil.getInstance().getHeaderSync(url);
             Response response = OkHttpUtil.getInstance().requestSync(url,method,mTaskItem.header);
-//            Log.i(TAG, "请求头================\n" + response.headers().toString());
-            //header请求才能拿到文件名
+            int code=response.code();
+            if(code>=200&&code<300){
+                //            Log.i(TAG, "请求头================\n" + response.headers().toString());
+                //header请求才能拿到文件名
 //            String fileName = getFileName(response);
 //            Log.i(TAG, "获取到文件名：" + fileName);
 
-            // 获取分块传输标志
-            String transferEncoding = response.header("Transfer-Encoding");
-            this.chunked = "chunked".equals(transferEncoding);
+                // 获取分块传输标志
+                String transferEncoding = response.header("Transfer-Encoding");
+                this.chunked = "chunked".equals(transferEncoding);
 //            Log.i(TAG, "是否分块传输：" + chunked);
-            // 没有分块传输才可获取到文件长度
-            if (!this.chunked) {
-                String strLen = response.header("Content-Length");
-                try {
-                    mFileLength = Long.parseLong(strLen);
+                // 没有分块传输才可获取到文件长度
+                if (!this.chunked) {
+                    String strLen = response.header("Content-Length");
+                    try {
+                        mFileLength = Long.parseLong(strLen);
 //                    Log.i(TAG, "文件大小：" + mFileLength);
-                } catch (Exception e) {
-                    mFileLength = response.body().contentLength();
-                }
-            }
-            long freeSpace=VideoDownloadUtils.getFreeSpaceBytes(VideoDownloadManager.getInstance().mConfig.privatePath);
-//            Log.e(TAG,"free space:"+VideoDownloadUtils.getSizeStr(freeSpace));
-            if (mFileLength > freeSpace) {
-                //存储空间不足
-                notifyError(new Exception(NO_SPACE));
-//                Log.e(TAG,"存储空间不足");
-                return;
-            }
-
-            // 是否支持断点续传
-            String acceptRanges = response.header("Accept-Ranges");
-            this.supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
-            this.eTag = response.header("ETag");
-//            Log.i(TAG, "是否支持断点续传：" + supportBreakpoint);
-//            Log.i(TAG, "ETag：" + eTag);
-            String contentType = response.header("Content-Type");
-//            Log.i(TAG, "content-type：" + contentType);
-            if (contentType != null) {
-                mTaskItem.contentType = contentType;
-                for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
-                    if (entry.getKey().contains(contentType)) {
-                        mTaskItem.suffix = entry.getValue();
-                        break;
+                    } catch (Exception e) {
+                        mFileLength = response.body().contentLength();
                     }
                 }
+                long freeSpace=VideoDownloadUtils.getFreeSpaceBytes(VideoDownloadManager.getInstance().mConfig.privatePath);
+//            Log.e(TAG,"free space:"+VideoDownloadUtils.getSizeStr(freeSpace));
+                if (mFileLength > freeSpace) {
+                    //存储空间不足
+                    notifyError(new Exception(NO_SPACE));
+//                Log.e(TAG,"存储空间不足");
+                    return;
+                }
+
+                // 是否支持断点续传
+                String acceptRanges = response.header("Accept-Ranges");
+                this.supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
+                this.eTag = response.header("ETag");
+//            Log.i(TAG, "是否支持断点续传：" + supportBreakpoint);
+//            Log.i(TAG, "ETag：" + eTag);
+                String contentType = response.header("Content-Type");
+//            Log.i(TAG, "content-type：" + contentType);
+                if (contentType != null) {
+                    mTaskItem.contentType = contentType;
+                    for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
+                        if (entry.getKey().contains(contentType)) {
+                            mTaskItem.suffix = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                fileName = VideoDownloadUtils.getFileName(mTaskItem, null, true);
+                File file=new File(mTaskItem.getSaveDir()+ File.separator + fileName);
+                if(file.exists()&&!mTaskItem.overwrite){
+                    fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "",true);
+                }
+                handlerData(response);
+            }else {
+                notifyError(new Exception("code:"+code+" message:"+response.message()));
             }
-            fileName = VideoDownloadUtils.getFileName(mTaskItem, null, true);
-            File file=new File(mTaskItem.getSaveDir()+ File.separator + fileName);
-            if(file.exists()&&!mTaskItem.overwrite){
-                fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "",true);
-            }
-            handlerData(response);
+
 
         } catch (Exception e) {
             e.printStackTrace();

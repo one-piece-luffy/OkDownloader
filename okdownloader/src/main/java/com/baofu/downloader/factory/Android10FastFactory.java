@@ -168,54 +168,59 @@ public class Android10FastFactory implements IDownloadFactory {
                 method = OkHttpUtil.METHOD.POST;
             }
             Response response = OkHttpUtil.getInstance().requestSync(url,method,mTaskItem.header);
+            int code=response.code();
+            if(code>=200&&code<300) {
 //            long dif=System.currentTimeMillis()-start;
 //            Log.i(TAG,"耗时:"+dif+" "+ Thread.currentThread().getName());
 //            Log.i(TAG, "请求头================\n" + response.headers().toString());
 
 
-            // 获取分块传输标志
-            String transferEncoding = response.header("Transfer-Encoding");
-            //分段传输标志，有这个标志不能获取到文件大小，就不能断点续传
-            boolean chunked = "chunked".equals(transferEncoding);
+                // 获取分块传输标志
+                String transferEncoding = response.header("Transfer-Encoding");
+                //分段传输标志，有这个标志不能获取到文件大小，就不能断点续传
+                boolean chunked = "chunked".equals(transferEncoding);
 //            Log.i(TAG, "是否分块传输：" + chunked);
-            // 没有分块传输才可获取到文件长度
-            if (!chunked) {
-                String strLen = response.header("Content-Length");
-                try {
-                    mFileLength = Long.parseLong(strLen);
-                } catch (Exception e) {
-                    mFileLength = response.body().contentLength();
-                }
+                // 没有分块传输才可获取到文件长度
+                if (!chunked) {
+                    String strLen = response.header("Content-Length");
+                    try {
+                        mFileLength = Long.parseLong(strLen);
+                    } catch (Exception e) {
+                        mFileLength = response.body().contentLength();
+                    }
 
 //                Log.e(TAG, "文件大小：" + VideoDownloadUtils.getSizeStr(mFileLength));
-            }
-            long freeSpace=VideoDownloadUtils.getFreeSpaceBytes(VideoDownloadManager.getInstance().mConfig.privatePath);
+                }
+                long freeSpace = VideoDownloadUtils.getFreeSpaceBytes(VideoDownloadManager.getInstance().mConfig.privatePath);
 //            Log.e(TAG,"free space:"+VideoDownloadUtils.getSizeStr(freeSpace));
-            if (mFileLength > freeSpace) {
-                //存储空间不足
-                notifyError(new Exception(NO_SPACE));
+                if (mFileLength > freeSpace) {
+                    //存储空间不足
+                    notifyError(new Exception(NO_SPACE));
 //                Log.e(TAG,"存储空间不足");
-                return;
-            }
+                    return;
+                }
 
-            // 是否支持断点续传
-            String acceptRanges = response.header("Accept-Ranges");
-            supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
-            eTag = response.header("ETag");
+                // 是否支持断点续传
+                String acceptRanges = response.header("Accept-Ranges");
+                supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
+                eTag = response.header("ETag");
 //            Log.i(TAG, "是否支持断点续传：" + supportBreakpoint);
 //            Log.i(TAG, "ETag：" + eTag);
-            String contentType = response.header("Content-Type");
+                String contentType = response.header("Content-Type");
 //            Log.i(TAG, "content-type：" + contentType);
-            if (contentType != null) {
-                mTaskItem.contentType = contentType;
-                for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
-                    if (entry.getKey().contains(contentType)) {
-                        mTaskItem.suffix = entry.getValue();
-                        break;
+                if (contentType != null) {
+                    mTaskItem.contentType = contentType;
+                    for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
+                        if (entry.getKey().contains(contentType)) {
+                            mTaskItem.suffix = entry.getValue();
+                            break;
+                        }
                     }
                 }
+                handlerData(response);
+            }else {
+                notifyError(new Exception("code:"+code+" message:"+response.message()));
             }
-            handlerData(response);
 
         } catch (Exception e) {
             Log.e(TAG, "start:Exception "+Thread.currentThread().getName() + "\n"  + e.getMessage());
