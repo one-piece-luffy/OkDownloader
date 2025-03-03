@@ -51,6 +51,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String videoLengthStr;//视频时长
     public long videoLength;//视频时长
     public long estimateSize;//m3u8预估的总大小（第一个ts的大小乘以总的ts个数）
+    public boolean privateFile;//隐私文件
     public String groupId;
 
     // 分辨率（质量）
@@ -449,6 +450,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         intent.putExtra("filename", getFileName());
         intent.putExtra("overwrite", overwrite);
         intent.putExtra("method", method);
+        intent.putExtra("privateFile", privateFile);
         intent.putExtra("sort", sort);
         intent.putExtra("downloadGroup", downloadGroup);
         intent.putExtra("notificationId", notificationId);
@@ -473,6 +475,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.overwrite=intent.getBooleanExtra("overwrite",false);
         item.method=intent.getStringExtra("method");
         item.downloadGroup=intent.getStringExtra("downloadGroup");
+        item.privateFile=intent.getBooleanExtra("privateFile",false);
         item.groupId=intent.getStringExtra("groupId");
         item.notificationId=intent.getIntExtra("notificationId",0);
         item.sort=intent.getIntExtra("sort",0);

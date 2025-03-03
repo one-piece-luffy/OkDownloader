@@ -299,7 +299,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         FFmpegUtils.covertM3u8ToMp4(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), new IFFmpegCallback() {
             @Override
             public void onSuc() {
-                if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
+                if (!mTaskItem.privateFile) {
                     copyToAlbum();
                 }
                 mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
@@ -336,7 +336,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         FFmpegUtils.doMerge(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), new IFFmpegCallback() {
             @Override
             public void onSuc() {
-                if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
+                if (!mTaskItem.privateFile) {
                     copyToAlbum();
                 }
                 mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
@@ -604,10 +604,10 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
     private void notifyDownloadFinish() {
         stopTimer();
         if (VideoDownloadManager.getInstance().mConfig.mergeM3u8) {
-            if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
-                mTaskItem.setFilePath(VideoDownloadManager.getInstance().mConfig.publicPath + File.separator + fileName);
-            } else {
+            if (mTaskItem.privateFile) {
                 mTaskItem.setFilePath(mTaskItem.getSaveDir() + File.separator + fileName);
+            } else {
+                mTaskItem.setFilePath(VideoDownloadManager.getInstance().mConfig.publicPath + File.separator + fileName);
             }
         } else {
             mTaskItem.setFilePath(mTaskItem.getSaveDir() + File.separator + fileName);

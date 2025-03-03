@@ -149,10 +149,10 @@ public class AllDownloadTask extends VideoDownloadTask {
     @Override
     public void initSaveDir() {
         //todo
-        if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
-            mSaveDir = new File(VideoDownloadManager.getInstance().mConfig.publicPath);
-        } else {
+        if (mTaskItem.privateFile) {
             mSaveDir = new File(VideoDownloadManager.getInstance().mConfig.privatePath);
+        } else {
+            mSaveDir = new File(VideoDownloadManager.getInstance().mConfig.publicPath);
         }
 
         if (!mSaveDir.exists()) {
@@ -171,7 +171,12 @@ public class AllDownloadTask extends VideoDownloadTask {
 //            Log.e(TAG, "start: " + isDownloading + "\t" + mTaskItem.getUrl());
             if (isDownloading) return;
             isDownloading = true;
-            if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
+
+            if (mTaskItem.privateFile) {
+                downloadFactory = new Android9Factory(mTaskItem, mSaveDir, iFactoryListener);
+                downloadFactory.download();
+            } else {
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     downloadFactory = new Android10FastFactory(mTaskItem, iFactoryListener);
                     downloadFactory.download();
@@ -179,11 +184,7 @@ public class AllDownloadTask extends VideoDownloadTask {
                     downloadFactory = new Android9Factory(mTaskItem, mSaveDir, iFactoryListener);
                     downloadFactory.download();
                 }
-            } else {
-                downloadFactory = new Android9Factory(mTaskItem, mSaveDir, iFactoryListener);
-                downloadFactory.download();
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();

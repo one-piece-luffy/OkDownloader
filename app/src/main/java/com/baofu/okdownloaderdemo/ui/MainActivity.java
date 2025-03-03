@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         header.put("referer",link);
         item.header=header;
         item.notify=true;
+        item.privateFile=true;
 
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
