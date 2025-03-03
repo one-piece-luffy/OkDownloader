@@ -9,11 +9,11 @@ public interface IVideoInfoListener {
 
     void onBaseVideoInfoSuccess(VideoTaskItem info);
 
-    void onBaseVideoInfoFailed(Throwable error);
+    void onBaseVideoInfoFailed(Exception error);
 
     void onM3U8InfoSuccess(VideoTaskItem info, M3U8 m3u8);
 
     void onLiveM3U8Callback(VideoTaskItem info);
 
-    void onM3U8InfoFailed(Throwable error);
+    void onM3U8InfoFailed(Exception error);
 }

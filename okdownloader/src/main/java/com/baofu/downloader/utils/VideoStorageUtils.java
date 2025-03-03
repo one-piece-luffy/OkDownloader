@@ -11,6 +11,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
+import com.baofu.downloader.R;
 import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.File;
@@ -185,5 +186,7 @@ public class VideoStorageUtils {
             return file.length();
         }
     }
+
+
 
 }

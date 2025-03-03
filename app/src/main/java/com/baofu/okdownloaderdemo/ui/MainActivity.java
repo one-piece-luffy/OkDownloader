@@ -1,7 +1,10 @@
 package com.baofu.okdownloaderdemo.ui;
 
+import android.Manifest;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -13,17 +16,17 @@ import androidx.databinding.DataBindingUtil;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.service.DownloadService;
-import com.baofu.downloader.utils.UniqueIdGenerator;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
+import com.baofu.permissionhelper.PermissionUtil;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding dataBinding;
-    String link="https://www.tiktok.com/aweme/v1/play/?faid=1988&file_id=1258763e907d4c6f9ca6de626ce9741c&is_play_url=1&item_id=7441887850984934678&line=0&ply_type=2&signaturev3=dmlkZW9faWQ7ZmlsZV9pZDtpdGVtX2lkLmE3Y2M4MjYyNmJjZTk1NDJkYzk4NDE0NTA2YWExYmM5&tk=tt_chain_token&video_id=v24044gl0000ct3eaenog65smrt9flbg";
+    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,30 +36,56 @@ public class MainActivity extends AppCompatActivity {
         dataBinding.download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                VideoTaskItem item = new VideoTaskItem(link);
-                item.mName = "图片";
-                item.mCoverUrl = link;
 
-                item.setFileName(item.mName);
-                item.overwrite = false;
-                Map<String,String> header=new HashMap<>();
-//                header.put("Range","bytes=0-14188543");
-                header.put("referer",link);
-                item.header=header;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startDownload();
+                } else {
+                    PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
+                            PermissionUtil.asArray(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE),
+                            (granted, isAlwaysDenied) -> {
+                                if (granted) {
+                                    startDownload();
+                                } else {
+                                    if (isAlwaysDenied) {
+                                        Toast.makeText(MainActivity.this,"权限申请失败，请设置中修改",Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(MainActivity.this,"权限申请失败",Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                }
 
-                //启动前台服务下载
-                //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
-                item.notificationId= UniqueIdGenerator.generateUniqueId();
-                Intent intent = new Intent(MainActivity.this, DownloadService.class);
-                item.putExtra(intent);
-                startService(intent);
-                Toast.makeText(MainActivity.this, "开始下载", Toast.LENGTH_SHORT).show();
+
             }
         });
         //设置全局下载监听
         VideoDownloadManager.getInstance().setGlobalDownloadListener(mListener);
     }
 
+    public void startDownload(){
+        VideoTaskItem item = new VideoTaskItem(link);
+        item.mName = "图片";
+        item.mCoverUrl = link;
+
+        item.setFileName(item.mName);
+        item.overwrite = false;
+        Map<String,String> header=new HashMap<>();
+//                header.put("Range","bytes=0-14188543");
+        header.put("referer",link);
+        item.header=header;
+        item.notify=true;
+
+        //启动前台服务下载
+        //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
+        VideoDownloadManager.getInstance().startDownload(MainActivity.this,item);
+        Toast.makeText(MainActivity.this, "开始下载", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+    }
 
     private DownloadListener mListener = new DownloadListener() {
         public void onDownloadDefault(VideoTaskItem item) {

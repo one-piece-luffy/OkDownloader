@@ -42,7 +42,7 @@ public class DownloadService extends Service {
             stopSelf();
         } else {
             try {
-                VideoDownloadManager.getInstance().startDownload(item);
+                VideoDownloadManager.getInstance().startDownload2(item);
                 NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 // Android8.0及以后的方式
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

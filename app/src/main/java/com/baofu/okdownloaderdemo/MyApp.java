@@ -43,7 +43,7 @@ public class MyApp extends Application {
                     .userAgent(AppConfig.UserAgent)
                     .decryptM3u8(true)
                     .mergeM3u8(false)
-                    .saveAsPublic(false)//保存在共有目录
+                    .saveAsPublic(true)//保存在共有目录
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
         } catch (Exception e) {

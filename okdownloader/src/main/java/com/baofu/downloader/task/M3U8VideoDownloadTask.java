@@ -46,8 +46,10 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,6 +73,9 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
     private final AtomicLong mCurrentDownloaddSize = new AtomicLong(0);//当前的下载大小
     AtomicBoolean isRunning = new AtomicBoolean(false);//任务是否正在运行中
     String fileName;
+    //存储下载失败的错误信息
+    Map<String,String> errMsgMap=new ConcurrentHashMap<>();
+    final int MAX_ERR_MAP_COUNT = 3;
 
     public M3U8VideoDownloadTask(VideoTaskItem taskItem, M3U8 m3u8) {
         super(taskItem);
@@ -188,8 +193,16 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             //        }
                             //下载失败的比例超过30%则不再下载，直接提示下载失败
                             if (mErrorTsCont * 100 / mTotalTs > 30) {
-                                Log.e(TAG, "错误的ts超过30%");
-                                notifyDownloadError(new VideoDownloadException(DownloadExceptionUtils.VIDEO_REQUEST_FAILED));
+                                StringBuilder err= new StringBuilder();
+
+                                Set<String> keySet = errMsgMap.keySet();
+                                int i=0;
+                                for (String key: keySet){
+                                    i++;
+                                    err.append(i).append(":").append(key).append("  ");
+                                }
+                                Log.e(TAG, "错误的ts超过30%: "+err);
+                                notifyDownloadError(new VideoDownloadException(err.toString()));
                             }
                         });
                     } catch (Exception e) {
@@ -240,6 +253,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         Log.i(TAG, "下载完成:" + mTotalSize);
                         if (VideoDownloadManager.getInstance().mConfig.mergeM3u8) {
                             mDownloadTaskListener.onTaskM3U8Merge();
+                            mTaskItem.mM3u8FilePath = mTaskItem.getSaveDir() + File.separator + fileName;
                             boolean ffmpeg = true;
                             if (ffmpeg) {
                                 doMergeByFFmpeg();
@@ -352,7 +366,12 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         } else {
             fileCopyWithFileChannel(mergeFile, toFile);
         }
-
+        try {
+            //删除旧文件
+            VideoStorageUtils.delete(mergeFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //适配android10公共目录下载后android10及以上可以不用刷新媒体库
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             try {
@@ -618,19 +637,18 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         FileOutputStream fos = null;
         FileChannel foutc = null;
         Response response = null;
+        int responseCode = -1;
         try {
             String method = OkHttpUtil.METHOD.GET;
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
             response = OkHttpUtil.getInstance().requestSync(videoUrl,method, mTaskItem.header);
-            if(response==null){
-                ts.failed = true;
-                mErrorTsCont++;
-                return;
+
+            if (response != null) {
+                responseCode = response.code();
             }
-            int responseCode = response.code();
-            if (responseCode == HttpUtils.RESPONSE_200 || responseCode == HttpUtils.RESPONSE_206) {
+            if (response!=null&& response.isSuccessful()) {
                 ts.setRetryCount(0);
                 inputStream = response.body().byteStream();
                 long contentLength = response.body().contentLength();
@@ -655,6 +673,18 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        ts.setRetryCount(ts.getRetryCount() + 1);
+                        if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
+                            Log.e(TAG, "====retry, exception=" + e.getMessage());
+                            downloadFile(ts, file, videoUrl);
+                        } else {
+                            ts.failed = true;
+                            mErrorTsCont++;
+                            if (errMsgMap.size() < MAX_ERR_MAP_COUNT) {
+                                errMsgMap.put(e.getMessage(), e.getMessage());
+                            }
+                        }
+                        return;
                     } finally {
                         if (fileOutputStream != null) {
                             fileOutputStream.close();
@@ -676,24 +706,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 mCurTs++;
                 ts.success = true;
             } else {
-                ts.setRetryCount(ts.getRetryCount() + 1);
-                if (responseCode == HttpUtils.RESPONSE_503 || responseCode == HttpUtils.RESPONSE_429) {
-                    if (ts.getRetryCount() <= MAX_RETRY_COUNT_503) {
-                        //遇到503，延迟[4,24]秒后再重试，区间间隔不能太小
-                        int ran = 4000 + (int) (Math.random() * 20000);
-                        Thread.sleep(ran);
-                        Log.e(TAG, "sleep:" + ran);
-                        downloadFile(ts, file, videoUrl);
-                    }
-                } else if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
-                    Log.e(TAG, "====retry1   responseCode=" + responseCode + "  ts:" + ts.getUrl());
-
-                    downloadFile(ts, file, videoUrl);
-                } else {
-                    Log.e(TAG, "====error   responseCode=" + responseCode + "  ts:" + ts.getUrl());
-                    ts.failed = true;
-                    mErrorTsCont++;
-                }
+                onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("response is null or code=" + responseCode));
             }
 
 
@@ -702,15 +715,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             Log.e(TAG, "InterruptedIOException");
             return;
         } catch (Exception e) {
-            e.printStackTrace();
-            ts.setRetryCount(ts.getRetryCount() + 1);
-            if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
-                Log.e(TAG, "====retry, exception=" + e.getMessage());
-                downloadFile(ts, file, videoUrl);
-            } else {
-                ts.failed = true;
-                mErrorTsCont++;
-            }
+            onDownloadFileErr(ts,file,videoUrl,responseCode,e);
         } finally {
             VideoDownloadUtils.close(inputStream);
             VideoDownloadUtils.close(fos);
@@ -733,7 +738,40 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             }
         }
 
+    }
 
+    private void onDownloadFileErr(M3U8Seg ts, File file, String videoUrl,int responseCode,Exception exception){
+        ts.setRetryCount(ts.getRetryCount() + 1);
+        if (responseCode == HttpUtils.RESPONSE_503 || responseCode == HttpUtils.RESPONSE_429) {
+            if (ts.getRetryCount() <= MAX_RETRY_COUNT_503) {
+                //遇到503，延迟[4,24]秒后再重试，区间间隔不能太小
+                int ran = 4000 + (int) (Math.random() * 20000);
+                try {
+                    Thread.sleep(ran);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                Log.e(TAG, "sleep:" + ran);
+                downloadFile(ts, file, videoUrl);
+            }
+        } else if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
+            Log.e(TAG, "====retry1   responseCode=" + responseCode + "  ts:" + ts.getUrl());
+
+            downloadFile(ts, file, videoUrl);
+        } else {
+            Log.e(TAG, "====error   responseCode=" + responseCode + "  ts:" + ts.getUrl());
+            ts.failed = true;
+            mErrorTsCont++;
+            String err;
+            if (exception == null) {
+                err = "code:" + responseCode;
+            } else {
+                err = exception.getMessage();
+            }
+            if (errMsgMap.size() < MAX_ERR_MAP_COUNT) {
+                errMsgMap.put(err,err);
+            }
+        }
     }
 
     private void saveFile(InputStream inputStream, File file, long contentLength, M3U8Seg ts, String videoUrl) {

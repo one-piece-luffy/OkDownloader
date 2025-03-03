@@ -1,5 +1,7 @@
 package com.baofu.downloader.rules;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -23,6 +25,7 @@ import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.model.Video;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.model.VideoTaskState;
+import com.baofu.downloader.service.DownloadService;
 import com.baofu.downloader.task.AllDownloadTask;
 import com.baofu.downloader.task.M3U8VideoDownloadTask;
 import com.baofu.downloader.task.VideoDownloadTask;
@@ -31,6 +34,7 @@ import com.baofu.downloader.utils.DownloadExceptionUtils;
 import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.LogUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
+import com.baofu.downloader.utils.UniqueIdGenerator;
 import com.baofu.downloader.utils.VideoDownloadConfig;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 import com.baofu.downloader.utils.VideoStorageUtils;
@@ -38,7 +42,9 @@ import com.baofu.downloader.utils.WorkerThreadHandler;
 import com.baofu.downloader.utils.notification.DownloadNotificationUtil;
 import com.baofu.downloader.utils.notification.NotificationBuilderManager;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +68,7 @@ public class VideoDownloadManager {
     //下载回调
     private final List<IDownloadInfosCallback> mDownloadInfoCallbacks = new CopyOnWriteArrayList<>();
     private final Map<String, VideoDownloadTask> mVideoDownloadTaskMap = new ConcurrentHashMap<>();
-    private final Map<String, VideoTaskItem> mVideoItemTaskMap = new ConcurrentHashMap<>();
+    public final Map<String, VideoTaskItem> mVideoItemTaskMap = new ConcurrentHashMap<>();
     public Map mDownloadReplace;
     public Map<String, IDownloadListener> mDownloadListener = new ConcurrentHashMap<>();
     //有下载任务就加到map里，用于获取打包下载时的进度
@@ -117,7 +123,21 @@ public class VideoDownloadManager {
         mGlobalDownloadListener = downloadListener;
     }
 
-    public void startDownload(VideoTaskItem taskItem) {
+    public void startDownload(Context context, VideoTaskItem taskItem) {
+        if (taskItem.notify) {
+            //启动前台服务下载
+            if (taskItem.notificationId <= 0) {
+                taskItem.notificationId = UniqueIdGenerator.generateUniqueId();
+            }
+            Intent intent = new Intent(context, DownloadService.class);
+            taskItem.putExtra(intent);
+            context.startService(intent);
+        } else {
+            startDownload2(taskItem);
+        }
+    }
+
+    public void startDownload2(VideoTaskItem taskItem) {
         if (taskItem == null || TextUtils.isEmpty(taskItem.getUrl()))
             return;
 
@@ -151,6 +171,11 @@ public class VideoDownloadManager {
                 mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_QUEUING, taskItem).sendToTarget();
                 return;
             }
+//            if (mRunningQueue.size() >= mConfig.concurrentCount) {
+//                taskItem.setTaskState(VideoTaskState.QUEUING);
+//                mVideoDownloadHandler.obtainMessage(DownloadConstants.MSG_DOWNLOAD_QUEUING, taskItem).sendToTarget();
+//                return;
+//            }
             mRunningQueue.offer(taskItem);
 
         }
@@ -207,9 +232,39 @@ public class VideoDownloadManager {
                         method = OkHttpUtil.METHOD.POST;
                     }
                     Response response = OkHttpUtil.getInstance().requestSync(taskItem.getUrl(),method,taskItem.header);
+                    if (response == null) {
+                        int errorCode = -1;
+                        taskItem.setErrorCode(errorCode);
+                        Exception e = new Exception("response is null");
+                        notifyError(taskItem, e);
+                        return;
+                    }
+                    if (!response.isSuccessful()) {
+                        int errorCode = response.code();
+                        taskItem.setErrorCode(errorCode);
+                        Exception e = new Exception("error code:" + errorCode);
+                        notifyError(taskItem, e);
+                        return;
+                    }
                     String contentType = response.header("Content-Type");
+                    boolean isM3u8Txt = false;
+                    if (contentType != null && contentType.startsWith("text")) {
+                        //处理m3u8伪装成txt或者html的情况
+                        try {
+                            Reader reader = response.body().charStream();// 获取流 response.body().bytes().
+                            BufferedReader bufferedReader = new BufferedReader(reader);
+                            String result = bufferedReader.readLine();
+                            if (result != null && result.equals("#EXTM3U")) {
+                                isM3u8Txt = true;
+                            }
+                            VideoDownloadUtils.close(bufferedReader, reader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
                     VideoDownloadUtils.close(response);
-                    if (taskItem.getUrl().contains(Video.TypeInfo.M3U8) || VideoDownloadUtils.isM3U8Mimetype(contentType)) {
+                    if (taskItem.getUrl().contains(Video.TypeInfo.M3U8) || VideoDownloadUtils.isM3U8Mimetype(contentType) || isM3u8Txt) {
                         //这是M3U8视频类型
                         taskItem.setMimeType(Video.TypeInfo.M3U8);
                         VideoInfoParserManager.getInstance().parseNetworkM3U8Info(taskItem, taskItem.header, new IVideoInfoListener() {
@@ -224,7 +279,7 @@ public class VideoDownloadManager {
                             }
 
                             @Override
-                            public void onBaseVideoInfoFailed(Throwable error) {
+                            public void onBaseVideoInfoFailed(Exception error) {
 
                             }
 
@@ -243,12 +298,9 @@ public class VideoDownloadManager {
                             }
 
                             @Override
-                            public void onM3U8InfoFailed(Throwable error) {
-                                LogUtils.w(TAG, "onM3U8InfoFailed : " + error);
-                                int errorCode = DownloadExceptionUtils.getErrorCode(error);
-                                taskItem.setErrorCode(errorCode);
-                                taskItem.setTaskState(VideoTaskState.ERROR);
-                                mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_ERROR, taskItem).sendToTarget();
+                            public void onM3U8InfoFailed(Exception e) {
+                                LogUtils.w(TAG, "onM3U8InfoFailed : " + e);
+                                notifyError(taskItem,e);
                             }
                         });
                     } else {
@@ -257,7 +309,6 @@ public class VideoDownloadManager {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    LogUtils.w(TAG, "onInfoFailed error=" + e);
 //                    try {
 //                        for (Call call : OkHttpUtil.getInstance().mOkHttpClient.dispatcher().queuedCalls()) {
 //                            if (taskItem.getUrl().equals(call.request().url().url().toString())) {
@@ -267,10 +318,7 @@ public class VideoDownloadManager {
 //                    } catch (Exception ex) {
 //                        ex.printStackTrace();
 //                    }
-                    int errorCode = DownloadExceptionUtils.getErrorCode(e);
-                    taskItem.setErrorCode(errorCode);
-                    taskItem.setTaskState(VideoTaskState.ERROR);
-                    mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_ERROR, taskItem).sendToTarget();
+                    notifyError(taskItem,e);
                 }
             }
         });
@@ -356,8 +404,11 @@ public class VideoDownloadManager {
                         if (listener != null) {
                             listener.onDownloadStart(taskItem);
                         }
-                        DownloadNotificationUtil util = new DownloadNotificationUtil();
-                        util.createNotification(VideoDownloadManager.getInstance().mConfig.context, taskItem);
+                        if(taskItem.notify){
+                            DownloadNotificationUtil util = new DownloadNotificationUtil();
+                            util.createNotification(VideoDownloadManager.getInstance().mConfig.context, taskItem);
+                        }
+
 
                     }
                 }
@@ -382,7 +433,9 @@ public class VideoDownloadManager {
                         if (listener != null) {
                             listener.onDownloadProgress(taskItem);
                         }
-                        NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,null,taskItem);
+                        if(taskItem.notify){
+                            NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,null,taskItem);
+                        }
                     }
                 }
 
@@ -401,7 +454,9 @@ public class VideoDownloadManager {
                         if (listener != null) {
                             listener.onDownloadProgress(taskItem);
                         }
-                        NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,null,taskItem);
+                        if(taskItem.notify){
+                            NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,null,taskItem);
+                        }
                     }
                 }
 
@@ -440,10 +495,11 @@ public class VideoDownloadManager {
                         if (taskItem.merged) {
                             return;
                         }
+
                         if (taskItem.isHlsType()) {
                             Log.e(TAG, "finish:" + taskItem.getSaveDir());
 
-                            mVideoItemTaskMap.put(taskItem.getUrl(), taskItem);
+
                             markDownloadFinishEvent(taskItem);
                             taskItem.setTaskState(VideoTaskState.SUCCESS);
                             mDownloadTaskMap.put(taskItem.getUrl(),taskItem);  //刷新map
@@ -462,40 +518,28 @@ public class VideoDownloadManager {
                         if (listener != null) {
                             listener.onDownloadSuccess(taskItem);
                         }
+                        mVideoItemTaskMap.remove(taskItem.getUrl());
                         mDownloadListener.remove(taskItem.getUrl());
 
                         mVideoDownloadTaskMap.remove(taskItem.getUrl());
 //                        mDownloadTaskMap.remove(taskItem.getUrl());
 
-                        Bundle bundle=new Bundle();
-                        bundle.putString("play_url",taskItem.getFilePath());
-                        bundle.putString("play_name",taskItem.mName);
-                        bundle.putString("sourceUrl",taskItem.sourceUrl);
-                        taskItem.message="done";
-                        NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,bundle,taskItem);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("play_url", taskItem.getFilePath());
+                        bundle.putString("m3u8_filepath", taskItem.mM3u8FilePath);
+                        bundle.putString("play_name", taskItem.mName);
+                        bundle.putString("sourceUrl", taskItem.sourceUrl);
+                        taskItem.message = "done";
+                        if(taskItem.notify){
+                            NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,bundle,taskItem);
+                        }
 
                     }
                 }
 
                 @Override
                 public void onTaskFailed(Exception e) {
-                    int errorCode = DownloadExceptionUtils.getErrorCode(e);
-                    taskItem.setErrorCode(errorCode);
-                    taskItem.setTaskState(VideoTaskState.ERROR);
-                    taskItem.exception=e;
-
-                    mDownloadTaskMap.put(taskItem.getUrl(),taskItem);
-
-                    mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_ERROR, taskItem).sendToTarget();
-                    IDownloadListener listener = mDownloadListener.get(taskItem.getUrl());
-                    if (listener != null) {
-                        listener.onDownloadError(taskItem);
-                    }
-
-                    mDownloadListener.remove(taskItem.getUrl());
-                    mVideoDownloadTaskMap.remove(taskItem.getUrl());
-                    taskItem.message="fail";
-                    NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,null,taskItem);
+                    notifyError(taskItem,e);
                 }
             });
 
@@ -503,6 +547,30 @@ public class VideoDownloadManager {
         }
     }
 
+    private void notifyError(VideoTaskItem taskItem,Exception e){
+        if(e!=null){
+            Log.e(TAG,"notify err:"+e.getMessage());
+        }
+        int errorCode = DownloadExceptionUtils.getErrorCode(e);
+        taskItem.setErrorCode(errorCode);
+        taskItem.setTaskState(VideoTaskState.ERROR);
+        taskItem.exception=e;
+
+        mDownloadTaskMap.put(taskItem.getUrl(),taskItem);
+
+        mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_ERROR, taskItem).sendToTarget();
+        IDownloadListener listener = mDownloadListener.get(taskItem.getUrl());
+        if (listener != null) {
+            listener.onDownloadError(taskItem);
+        }
+
+        mDownloadListener.remove(taskItem.getUrl());
+        mVideoDownloadTaskMap.remove(taskItem.getUrl());
+        taskItem.message="fail";
+        if (taskItem.notify) {
+            NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context, null, taskItem);
+        }
+    }
 
     public void deleteAllVideoFiles() {
         try {
@@ -580,6 +648,7 @@ public class VideoDownloadManager {
         VideoDownloadTask task = mVideoDownloadTaskMap.get(url);
         if (task != null) {
             task.cancle();
+            task.delete();
         }
 
         deleteVideoTask(taskItem, true);
@@ -597,7 +666,7 @@ public class VideoDownloadManager {
                     return;
                 }
             }
-            startDownload(taskItem);
+            startDownload2(taskItem);
 
         }
     }
@@ -621,6 +690,13 @@ public class VideoDownloadManager {
                 VideoStorageUtils.delete(privateFile);
                 VideoStorageUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context,publicFile.getAbsolutePath());
                 VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
+                if(!TextUtils.isEmpty(taskItem.mM3u8FilePath)){
+                    File m3u8=new File(taskItem.mM3u8FilePath);
+                    VideoStorageUtils.delete(m3u8.getParentFile());
+                }
+                Log.e(TAG,"asdf===private:"+privateFile.getAbsolutePath());
+                Log.e(TAG,"asdf===public:"+publicFile.getAbsolutePath());
+                Log.e(TAG,"asdf===filepath:"+taskItem.getFilePath());
 
             }
             if (mVideoDownloadTaskMap.containsKey(taskItem.getUrl())) {
@@ -680,7 +756,7 @@ public class VideoDownloadManager {
                     if (mRunningQueue.contains(item1)) {
                         continue;
                     }
-                    startDownload(item1);
+                    startDownload2(item1);
                     Log.e(TAG, "removeDownloadQueue");
                 }
             }
@@ -777,7 +853,7 @@ public class VideoDownloadManager {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-           if (msg.what == VideoDownloadConstants.MSG_DELETE_ALL_FILES) {
+            if (msg.what == VideoDownloadConstants.MSG_DELETE_ALL_FILES) {
                 if(mConfig.openDb){
                     //删除数据库中所有记录
                     WorkerThreadHandler.submitRunnableTask(() -> mVideoDatabaseHelper.deleteAllDownloadInfos());
@@ -959,7 +1035,7 @@ public class VideoDownloadManager {
                     VideoTaskItem item = list.get(i);
                     item.skipM3u8 = true;
                     mDownloadTaskMap.put(item.getUrl(), item);
-                    startDownload(item);
+                    startDownload2(item);
                 }
             }
 

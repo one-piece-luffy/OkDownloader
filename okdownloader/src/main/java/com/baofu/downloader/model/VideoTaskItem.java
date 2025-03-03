@@ -8,12 +8,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.m3u8.M3U8;
+import com.baofu.downloader.utils.DownloadConstans;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class VideoTaskItem implements Cloneable, Parcelable {
 
@@ -40,6 +39,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public long mLastUpdateTime;        //上一次更新数据库的时间
     private String fileName;            //文件名
     public String mFilePath;            //文件完整路径(包括文件名)
+    public String mM3u8FilePath;            //m3u8文件完整路径(包括文件名)
     public boolean mPaused;
     public String mName;//用于显示的名称
     public boolean isSelect;//是否选中
@@ -51,7 +51,6 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String videoLengthStr;//视频时长
     public long videoLength;//视频时长
     public long estimateSize;//m3u8预估的总大小（第一个ts的大小乘以总的ts个数）
-    public boolean privateFile;//隐私文件
     public String groupId;
 
     // 分辨率（质量）
@@ -87,6 +86,9 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public int notificationId;
     //sort为空时，用sort2排序
     public int sort2;
+    //是否开启通知
+    public boolean notify = true;
+
 
 
 
@@ -337,13 +339,16 @@ public class VideoTaskItem implements Cloneable, Parcelable {
      */
     public void setFileName(String fileName) {
         String name = filterFileName(fileName);
-        if (name != null && name.contains(".m3u8") ) {
+        if (name != null) {
+            if (name.contains(".m3u8")) {
             /*
               如果不是m3u8类型的文件，文件名不能包含.m3u8，否则exo播放器会认为是m3u8从而播放失败
               这个项目下载路径在公共目录，默认保存为MP4，所以需要过滤.m3u8文件名
              */
-            name = name.replace(".m3u8", "_");
+                name = name.replace(".m3u8", "_");
+            }
         }
+
         this.fileName = name;
     }
 
@@ -352,7 +357,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
      */
     public String filterFileName(String fileName){
         if(!TextUtils.isEmpty(fileName)){
-            String specialChars = "/:<>?|'\"*\\";
+            String specialChars = "/:<>?%#|'\"*\\";
 
             // 遍历文件名中的每个字符，检查是否为特殊字符
             for (int i = 0; i < fileName.length(); i++) {
@@ -383,6 +388,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         mTotalSize = 0;
         fileName = null;
         mFilePath = null;
+        mM3u8FilePath = null;
         mCoverUrl = null;
         mCoverPath = null;
     }
@@ -400,6 +406,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         mTotalSize = 0;
         fileName = null;
         mFilePath = null;
+        mM3u8FilePath = null;
         mIsCompleted=false;
     }
 
@@ -417,6 +424,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         taskItem.setTotalSize(mTotalSize);
         taskItem.setFileHash(mFileHash);
         taskItem.setFilePath(mFilePath);
+        taskItem.mM3u8FilePath=mM3u8FilePath;
         taskItem.fileName=fileName;
         taskItem.setCoverUrl(mCoverUrl);
         taskItem.setCoverPath(mCoverPath);
@@ -551,6 +559,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         dest.writeLong(this.mLastUpdateTime);
         dest.writeString(this.fileName);
         dest.writeString(this.mFilePath);
+        dest.writeString(this.mM3u8FilePath);
         dest.writeByte(this.mPaused ? (byte) 1 : (byte) 0);
         dest.writeString(this.mName);
         dest.writeString(this.sourceUrl);
@@ -585,6 +594,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         this.mLastUpdateTime = source.readLong();
         this.fileName = source.readString();
         this.mFilePath = source.readString();
+        this.mM3u8FilePath = source.readString();
         this.mPaused = source.readByte() != 0;
         this.mName = source.readString();
         this.sourceUrl = source.readString();
@@ -619,6 +629,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         this.mLastUpdateTime = in.readLong();
         this.fileName = in.readString();
         this.mFilePath = in.readString();
+        this.mM3u8FilePath = in.readString();
         this.mPaused = in.readByte() != 0;
         this.mName = in.readString();
         this.sourceUrl = in.readString();

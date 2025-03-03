@@ -26,6 +26,7 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
         public static final String COMPLETED = "completed";
         public static final String FILE_NAME = "file_name";
         public static final String FILE_PATH = "file_path";
+        public static final String M3U8_FILE_PATH = "m3u8_file_path";
         public static final String COVER_URL = "cover_url";
         public static final String COVER_PATH = "cover_path";
         public static final String NAME = "name";
@@ -88,6 +89,7 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
                 + Columns.COMPLETED + " TINYINT, "
                 + Columns.FILE_NAME + " TEXT Default 0, "
                 + Columns.FILE_PATH + " TEXT, "
+                + Columns.M3U8_FILE_PATH + " TEXT, "
                 + Columns.COVER_URL + " TEXT, "
                 + Columns.NAME + " TEXT, "
                 + Columns.DOWNLOAD_GROUP + " TEXT, "

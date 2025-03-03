@@ -100,13 +100,13 @@ public class VideoDownloadDatabaseHelper {
             values.put(VideoDownloadSQLiteHelper.Columns.COMPLETED, item.isCompleted());
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_NAME, item.getFileName());
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_PATH, item.getFilePath());
+            values.put(VideoDownloadSQLiteHelper.Columns.M3U8_FILE_PATH, item.mM3u8FilePath);
             values.put(VideoDownloadSQLiteHelper.Columns.COVER_URL, item.getCoverUrl());
             values.put(VideoDownloadSQLiteHelper.Columns.COVER_PATH, item.getCoverPath());
             values.put(VideoDownloadSQLiteHelper.Columns.NAME, item.mName);
             values.put(VideoDownloadSQLiteHelper.Columns.DOWNLOAD_GROUP, item.downloadGroup);
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_HASH, item.mFileHash);
             values.put(VideoDownloadSQLiteHelper.Columns.SORT, item.sort);
-            values.put(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE, item.privateFile+"");
             values.put(VideoDownloadSQLiteHelper.Columns.SPEED, item.getSpeed());
             values.put(VideoDownloadSQLiteHelper.Columns.SOURCE_URL, item.sourceUrl);
             values.put(VideoDownloadSQLiteHelper.Columns.SUFFIX, item.suffix);
@@ -153,7 +153,6 @@ public class VideoDownloadDatabaseHelper {
             values.put(VideoDownloadSQLiteHelper.Columns.DOWNLOAD_GROUP, item.downloadGroup);
             values.put(VideoDownloadSQLiteHelper.Columns.SORT, item.sort);
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_HASH, item.mFileHash);
-            values.put(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE, item.privateFile+"");
             values.put(VideoDownloadSQLiteHelper.Columns.SPEED, item.getSpeed());
             values.put(VideoDownloadSQLiteHelper.Columns.SOURCE_URL, item.sourceUrl);
             values.put(VideoDownloadSQLiteHelper.Columns.QUALITY, item.quality);
@@ -256,6 +255,7 @@ public class VideoDownloadDatabaseHelper {
                     item.setIsCompleted(cursor.getInt(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.COMPLETED)) == 1 ? true : false);
                     item.setFileName(cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.FILE_NAME)));
                     item.setFilePath(cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.FILE_PATH)));
+                    item.mM3u8FilePath=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.M3U8_FILE_PATH));
                     item.setCoverUrl(cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.COVER_URL)));
                     item.setCoverPath(cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.COVER_PATH)));
                     item.mName=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.NAME));
@@ -263,7 +263,6 @@ public class VideoDownloadDatabaseHelper {
                     item.sort=cursor.getInt(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.SORT));
                     item.mFileHash=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.FILE_HASH));
                     String pf=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE));
-                    item.privateFile="true".equals(pf)?true:false;
                     item.sourceUrl=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.SOURCE_URL));
                     item.quality=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.QUALITY));
                     item.suffix=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.SUFFIX));
