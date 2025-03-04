@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "video_download_info.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_VIDEO_DOWNLOAD_INFO = "video_download_info";
 
