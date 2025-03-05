@@ -202,7 +202,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                                     err.append(i).append(":").append(key).append("  ");
                                 }
                                 Log.e(TAG, "错误的ts超过30%: "+err);
-                                notifyDownloadError(new VideoDownloadException(err.toString()));
+                                notifyDownloadError(new VideoDownloadException("m3u8:"+err.toString()));
                             }
                         });
                     } catch (Exception e) {
@@ -244,7 +244,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             createLocalM3U8File();
                         } catch (Exception e) {
                             Log.e(TAG, "创建本地文件失败");
-                            notifyDownloadError(e);
+                            notifyDownloadError(new VideoDownloadException("m3u8:创建本地文件失败"));
                             return;
                         }
                         stopTimer();
@@ -309,7 +309,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 
             @Override
             public void onFail() {
-                notifyDownloadError(new Exception("m3u8合并失败"));
+                notifyDownloadError(new Exception("m3u8:合并失败"));
 //                doMerge();
 //                if (VideoDownloadManager.getInstance().mConfig.saveAsPublic) {
 //                    copyToAlbum();
@@ -347,7 +347,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 
             @Override
             public void onFail() {
-                notifyDownloadError(new Exception());
+                notifyDownloadError(new Exception("m3u8:合并失败"));
             }
         });
 
