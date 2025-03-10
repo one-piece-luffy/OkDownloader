@@ -55,6 +55,7 @@ import okhttp3.Response;
 
 public class VideoDownloadManager {
     private static final String TAG = "VideoDownloadManager";
+    private static final String TAG2 = "VideoDownloadManager: ";
     public String downloadDir="album";
     private static volatile VideoDownloadManager sInstance = null;
     private DownloadListener mGlobalDownloadListener = null;
@@ -235,14 +236,14 @@ public class VideoDownloadManager {
                     if (response == null) {
                         int errorCode = -1;
                         taskItem.setErrorCode(errorCode);
-                        Exception e = new Exception("response is null");
+                        Exception e = new Exception(TAG2+"response is null");
                         notifyError(taskItem, e);
                         return;
                     }
                     if (!response.isSuccessful()) {
                         int errorCode = response.code();
                         taskItem.setErrorCode(errorCode);
-                        Exception e = new Exception("error code:" + errorCode);
+                        Exception e = new Exception(TAG2+"error code:" + errorCode);
                         notifyError(taskItem, e);
                         return;
                     }
@@ -318,7 +319,8 @@ public class VideoDownloadManager {
 //                    } catch (Exception ex) {
 //                        ex.printStackTrace();
 //                    }
-                    notifyError(taskItem,e);
+                    Exception exception = new Exception(TAG2 + e.getMessage());
+                    notifyError(taskItem, exception);
                 }
             }
         });
@@ -539,7 +541,9 @@ public class VideoDownloadManager {
 
                 @Override
                 public void onTaskFailed(Exception e) {
-                    notifyError(taskItem,e);
+                    Exception exception = new Exception(TAG2 + e.getMessage());
+
+                    notifyError(taskItem,exception);
                 }
             });
 

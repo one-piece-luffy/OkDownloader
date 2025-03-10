@@ -42,7 +42,7 @@ import okhttp3.ResponseBody;
 public class Android9Factory implements IDownloadFactory {
     //当前重试次数
     private int mRetryCount;
-    public final String TAG = getClass().getName();
+    public final String TAG = getClass().getName()+": ";
     IFactoryListener listener;
     long mFileLength;
     VideoTaskItem mTaskItem;
@@ -184,7 +184,7 @@ public class Android9Factory implements IDownloadFactory {
                 }
                 handlerData(response);
             }else {
-                notifyError(new Exception("code:"+code+" message:"+response.message()));
+                notifyError(new Exception(TAG+"code:"+code+" message:"+response.message()));
             }
 
 
@@ -339,7 +339,7 @@ public class Android9Factory implements IDownloadFactory {
                                  Response response, File cacheFile, RandomAccessFile cacheAccessFile, int downloadtype) {
         ResponseBody body=response.body();
         if (body == null) {
-            notifyError(new Exception("unknow exception"));
+            notifyError(new Exception(TAG+"body is null"));
             return;
         }
         long len=0;
@@ -523,7 +523,8 @@ public class Android9Factory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            notifyError(e);
+            Exception ex=new Exception(TAG+e.getMessage());
+            notifyError(ex);
         }
     }
 
@@ -656,7 +657,7 @@ public class Android9Factory implements IDownloadFactory {
 
         ResponseBody body = response.body();
         if (body == null) {
-            notifyError(new Exception("unknow exception"));
+            notifyError(new Exception(TAG+"body is null"));
             return;
         }
 
@@ -706,7 +707,8 @@ public class Android9Factory implements IDownloadFactory {
             if (cancel)
                 return;
             resetStutus();
-            notifyError(e);
+            Exception ex = new Exception(TAG + e.getMessage());
+            notifyError(ex);
         } finally {
             VideoDownloadUtils.close(inputStream);
             VideoDownloadUtils.close(fos);

@@ -57,7 +57,7 @@ public class Android10FastFactory implements IDownloadFactory {
 
     //当前重试次数
     private int mRetryCount;
-    public final String TAG = getClass().getName();
+    public final String TAG = getClass().getName()+": ";
     IFactoryListener listener;
     //文件大小
     long mFileLength;
@@ -219,7 +219,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 }
                 handlerData(response);
             }else {
-                notifyError(new Exception("code:"+code+" message:"+response.message()));
+                notifyError(new Exception(TAG+"code:"+code+" message:"+response.message()));
             }
 
         } catch (Exception e) {
@@ -509,13 +509,13 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 } else {
                     resetStutus();
-                    notifyError(new Exception("server error:"+code));
+                    notifyError(new Exception(TAG+"server error:"+code));
                 }
                 return;
             }
             ResponseBody body=response.body();
             if (body == null) {
-                notifyError(new Exception("response body is null"));
+                notifyError(new Exception(TAG+"response body is null"));
                 return;
             }
             InputStream is =body.byteStream();// 获取流
@@ -633,7 +633,8 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 } else {
                     resetStutus();
-                    notifyError(e);
+                    Exception ex=new Exception(TAG+e.getMessage());
+                    notifyError(ex);
                 }
 
             }
@@ -649,7 +650,8 @@ public class Android10FastFactory implements IDownloadFactory {
                 }
             } else {
                 resetStutus();
-                notifyError(e);
+                Exception ex=new Exception(TAG+e.getMessage());
+                notifyError(ex);
             }
         }
     }
@@ -772,12 +774,12 @@ public class Android10FastFactory implements IDownloadFactory {
 
     private void handlerResponse(final long startIndex, final long endIndex, final int threadId, final long finalStartIndex, Response response, int downloadtype) {
         if (response == null) {
-            notifyError(new Exception("unknow exception"));
+            notifyError(new Exception(TAG+"response is null"));
             return;
         }
         ResponseBody body=response.body();
         if (body == null) {
-            notifyError(new Exception("unknow exception"));
+            notifyError(new Exception(TAG+"body is null"));
             return;
         }
         long len=0;
@@ -968,7 +970,8 @@ public class Android10FastFactory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            notifyError(e);
+            Exception ex=new Exception(TAG+e.getMessage());
+            notifyError(ex);
         }
     }
 
@@ -1069,7 +1072,8 @@ public class Android10FastFactory implements IDownloadFactory {
                     ioException.printStackTrace();
                 }
             } else {
-                notifyError(e);
+                Exception ex=new Exception(TAG+e.getMessage());
+                notifyError(ex);
             }
         } finally {
             close(response.body());
