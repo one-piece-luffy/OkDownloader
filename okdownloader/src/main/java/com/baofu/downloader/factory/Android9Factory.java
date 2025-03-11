@@ -42,7 +42,7 @@ import okhttp3.ResponseBody;
 public class Android9Factory implements IDownloadFactory {
     //当前重试次数
     private int mRetryCount;
-    public final String TAG = getClass().getName()+": ";
+    public final String TAG = getClass().getSimpleName()+": ";
     IFactoryListener listener;
     long mFileLength;
     VideoTaskItem mTaskItem;
@@ -184,7 +184,7 @@ public class Android9Factory implements IDownloadFactory {
                 }
                 handlerData(response);
             }else {
-                notifyError(new Exception(TAG+"code:"+code+" message:"+response.message()));
+                notifyError(new Exception(TAG+"initDownloadInfo: code:"+code+" message:"+response.message()));
             }
 
 
@@ -278,7 +278,7 @@ public class Android9Factory implements IDownloadFactory {
 
         } catch (Exception e) {
             e.printStackTrace();
-            retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_RANGE,-1);
+            retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_RANGE,-2);
         }
     }
 
@@ -313,14 +313,14 @@ public class Android9Factory implements IDownloadFactory {
                 @Override
                 public void onFailure(@NotNull Exception e) {
                     e.printStackTrace();
-                    retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-1);
+                    retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-3);
                 }
             });
 
         } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG,"=="+e.getMessage());
-            retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-1);
+            retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-4);
         }
     }
 
@@ -339,7 +339,7 @@ public class Android9Factory implements IDownloadFactory {
                                  Response response, File cacheFile, RandomAccessFile cacheAccessFile, int downloadtype) {
         ResponseBody body=response.body();
         if (body == null) {
-            notifyError(new Exception(TAG+"body is null"));
+            notifyError(new Exception(TAG+"handlerResponse: body is null"));
             return;
         }
         long len=0;
@@ -475,7 +475,7 @@ public class Android9Factory implements IDownloadFactory {
             cleanFile(cacheFile);
         } catch (Exception e) {
             e.printStackTrace();
-            retry(startIndex, endIndex, threadId, e, downloadtype,-1);
+            retry(startIndex, endIndex, threadId, e, downloadtype,-5);
             Log.e(TAG,"=="+e.getMessage());
         } finally {
             //关闭资源
@@ -523,7 +523,7 @@ public class Android9Factory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            Exception ex=new Exception(TAG+e.getMessage());
+            Exception ex=new Exception(TAG+"retry: "+e.getMessage()+" code:"+errCode);
             notifyError(ex);
         }
     }
@@ -657,7 +657,7 @@ public class Android9Factory implements IDownloadFactory {
 
         ResponseBody body = response.body();
         if (body == null) {
-            notifyError(new Exception(TAG+"body is null"));
+            notifyError(new Exception(TAG+"saveFile: body is null"));
             return;
         }
 
@@ -707,7 +707,7 @@ public class Android9Factory implements IDownloadFactory {
             if (cancel)
                 return;
             resetStutus();
-            Exception ex = new Exception(TAG + e.getMessage());
+            Exception ex = new Exception(TAG +"saveFile: "+ e.getMessage());
             notifyError(ex);
         } finally {
             VideoDownloadUtils.close(inputStream);

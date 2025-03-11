@@ -61,9 +61,9 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
 //        db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.FILE_HASH + " TEXT");
 //        db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.SORT + " BIGINT");
 
-//        if (oldVersion == 2) {
-//            db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.NOTIFICATION_ID + " INTEGER");
-//        }
+        if (oldVersion == 1) {
+            db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.M3U8_FILE_PATH + " TEXT");
+        }
 
     }
 

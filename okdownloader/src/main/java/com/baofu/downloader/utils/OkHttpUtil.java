@@ -8,13 +8,16 @@ import androidx.annotation.NonNull;
 import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -238,8 +241,12 @@ public class OkHttpUtil {
                 .connectTimeout(VideoDownloadManager.getInstance().mConfig.getConnTimeOut(), TimeUnit.SECONDS)
                 .writeTimeout(VideoDownloadManager.getInstance().mConfig.getReadTimeOut(), TimeUnit.SECONDS)
                 .readTimeout(VideoDownloadManager.getInstance().mConfig.getWriteTimeOut(), TimeUnit.SECONDS);
-//        builder.connectionPool(new ConnectionPool(32,5,TimeUnit.MINUTES));
+        //创建连接池，优化Connection reset出现的问题
+        builder.connectionPool(new ConnectionPool(5,10,TimeUnit.MINUTES));
         builder.addInterceptor(new RedirectInterceptor());
+        //使用 HTTP/2 优化Connection reset出现的问题
+        builder.protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+
         builder.sslSocketFactory(SSLUtil.getInstance().getSSLSocketFactory(), SSLUtil.getInstance().getTrustManager());
         builder.hostnameVerifier(SSLUtil.getInstance().getHostnameVerifier());
 

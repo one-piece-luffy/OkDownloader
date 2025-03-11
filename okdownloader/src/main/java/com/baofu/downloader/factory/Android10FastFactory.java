@@ -57,7 +57,7 @@ public class Android10FastFactory implements IDownloadFactory {
 
     //当前重试次数
     private int mRetryCount;
-    public final String TAG = getClass().getName()+": ";
+    public final String TAG = getClass().getSimpleName()+": ";
     IFactoryListener listener;
     //文件大小
     long mFileLength;
@@ -219,7 +219,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 }
                 handlerData(response);
             }else {
-                notifyError(new Exception(TAG+"code:"+code+" message:"+response.message()));
+                notifyError(new Exception(TAG+"initDownloadInfo: code:"+code+" message:"+response.message()));
             }
 
         } catch (Exception e) {
@@ -509,13 +509,13 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 } else {
                     resetStutus();
-                    notifyError(new Exception(TAG+"server error:"+code));
+                    notifyError(new Exception(TAG+"downloadByRangeSync: server error:"+code));
                 }
                 return;
             }
             ResponseBody body=response.body();
             if (body == null) {
-                notifyError(new Exception(TAG+"response body is null"));
+                notifyError(new Exception(TAG+"downloadByRangeSync: response body is null"));
                 return;
             }
             InputStream is =body.byteStream();// 获取流
@@ -633,7 +633,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 } else {
                     resetStutus();
-                    Exception ex=new Exception(TAG+e.getMessage());
+                    Exception ex=new Exception(TAG+"downloadByRangeSync1: "+e.getMessage());
                     notifyError(ex);
                 }
 
@@ -650,7 +650,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 }
             } else {
                 resetStutus();
-                Exception ex=new Exception(TAG+e.getMessage());
+                Exception ex=new Exception(TAG+"downloadByRangeSync2:"+e.getMessage());
                 notifyError(ex);
             }
         }
@@ -766,7 +766,7 @@ public class Android10FastFactory implements IDownloadFactory {
             @Override
             public void onFailure(@NotNull Exception e) {
                 e.printStackTrace();
-                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-1);
+                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-2);
             }
         });
 
@@ -774,12 +774,12 @@ public class Android10FastFactory implements IDownloadFactory {
 
     private void handlerResponse(final long startIndex, final long endIndex, final int threadId, final long finalStartIndex, Response response, int downloadtype) {
         if (response == null) {
-            notifyError(new Exception(TAG+"response is null"));
+            notifyError(new Exception(TAG+"handlerResponse: response is null"));
             return;
         }
         ResponseBody body=response.body();
         if (body == null) {
-            notifyError(new Exception(TAG+"body is null"));
+            notifyError(new Exception(TAG+"handlerResponse: body is null"));
             return;
         }
         long len=0;
@@ -924,7 +924,7 @@ public class Android10FastFactory implements IDownloadFactory {
         } catch (Exception e) {
             Log.e(TAG,""+e.getMessage());
             e.printStackTrace();
-            retry(startIndex, endIndex, threadId, e, downloadtype,-1);
+            retry(startIndex, endIndex, threadId, e, downloadtype,-3);
 
         } finally {
             //关闭资源
@@ -970,7 +970,7 @@ public class Android10FastFactory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            Exception ex=new Exception(TAG+e.getMessage());
+            Exception ex=new Exception(TAG+"retry: "+e.getMessage()+" code:"+errCode);
             notifyError(ex);
         }
     }
@@ -1072,7 +1072,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     ioException.printStackTrace();
                 }
             } else {
-                Exception ex=new Exception(TAG+e.getMessage());
+                Exception ex=new Exception(TAG+"handPublicDir:"+e.getMessage());
                 notifyError(ex);
             }
         } finally {

@@ -236,14 +236,14 @@ public class VideoDownloadManager {
                     if (response == null) {
                         int errorCode = -1;
                         taskItem.setErrorCode(errorCode);
-                        Exception e = new Exception(TAG2+"response is null");
+                        Exception e = new Exception(TAG2+"parseNetworkVideoInfo: response is null");
                         notifyError(taskItem, e);
                         return;
                     }
                     if (!response.isSuccessful()) {
                         int errorCode = response.code();
                         taskItem.setErrorCode(errorCode);
-                        Exception e = new Exception(TAG2+"error code:" + errorCode);
+                        Exception e = new Exception(TAG2+"parseNetworkVideoInfo: error code:" + errorCode);
                         notifyError(taskItem, e);
                         return;
                     }
@@ -319,7 +319,7 @@ public class VideoDownloadManager {
 //                    } catch (Exception ex) {
 //                        ex.printStackTrace();
 //                    }
-                    Exception exception = new Exception(TAG2 + e.getMessage());
+                    Exception exception = new Exception(TAG2 + "parseNetworkVideoInfo: "+e.getMessage());
                     notifyError(taskItem, exception);
                 }
             }
@@ -541,7 +541,7 @@ public class VideoDownloadManager {
 
                 @Override
                 public void onTaskFailed(Exception e) {
-                    Exception exception = new Exception(TAG2 + e.getMessage());
+                    Exception exception = new Exception(TAG2 + "startDownloadTask: "+e.getMessage());
 
                     notifyError(taskItem,exception);
                 }
