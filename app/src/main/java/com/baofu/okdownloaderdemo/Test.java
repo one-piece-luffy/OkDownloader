@@ -12,7 +12,7 @@ public class Test {
 
     public void downloadNet() throws MalformedURLException {
 
-        int byteread ;
+        int byteread;
         URL url = new URL("https://windine.blogdriver.com/demo.mp4");
         try {
             URLConnection conn = url.openConnection();

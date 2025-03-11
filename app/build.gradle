@@ -31,11 +31,12 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.github.one-piece-luffy:PermissionHelp:1.5.2'
     implementation project(path: ':okdownloader')
+    implementation 'androidx.activity:activity:1.10.0'
 //    implementation 'com.github.one-piece-luffy:OkDownloader:1.1.0'
 
 }
