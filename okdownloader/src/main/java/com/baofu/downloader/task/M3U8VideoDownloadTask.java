@@ -191,6 +191,8 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             //            ts.setTsSize(tsFile.length());
                             //            notifyDownloadProgress();
                             //        }
+
+
                             //下载失败的比例超过30%则不再下载，直接提示下载失败
                             if (mErrorTsCont * 100 / mTotalTs > 30) {
                                 StringBuilder err= new StringBuilder();
@@ -199,10 +201,13 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                                 int i=0;
                                 for (String key: keySet){
                                     i++;
-                                    err.append(i).append(":").append(key).append("  ");
+                                    err.append("errNum ").append(i).append(":").append(key).append("  ");
                                 }
                                 Log.e(TAG, "错误的ts超过30%: "+err);
-                                notifyDownloadError(new VideoDownloadException("m3u8:"+err.toString()));
+                                if (isRunning.get()) {
+                                    notifyDownloadError(new VideoDownloadException("m3u8:" + err.toString()));
+                                }
+
                             }
                         });
                     } catch (Exception e) {
@@ -548,7 +553,6 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 
     @Override
     public void initSaveDir() {
-        Log.e("asdf","initSaveDir");
 
         if (TextUtils.isEmpty(mTaskItem.getSaveDir())) {
             mSaveName = VideoDownloadUtils.getFileName(mTaskItem, null, false);

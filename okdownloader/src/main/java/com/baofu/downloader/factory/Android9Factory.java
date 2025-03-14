@@ -7,6 +7,7 @@ import static com.baofu.downloader.utils.OkHttpUtil.NO_SPACE;
 import static com.baofu.downloader.utils.OkHttpUtil.URL_INVALID;
 import static com.baofu.downloader.utils.VideoDownloadUtils.close;
 
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -29,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -206,17 +210,19 @@ public class Android9Factory implements IDownloadFactory {
 
     }
 
-    private void downloadByRange(final long startIndex, final long endIndex, final int threadId) throws IOException {
+    private void downloadByRange(final long startIndex, final long endIndex, final int threadId,boolean retry) throws IOException {
         if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
             notifyError(new Exception(URL_INVALID));
             return;
         }
-//        Log.i(TAG,"thread"+threadId+" RANGE: "+startIndex+"-"+endIndex);
+        Log.e(TAG,"asdf thread"+threadId+" RANGE: "+startIndex+"-"+endIndex+" retry:"+retry);
         long newStartIndex = startIndex;
         // 分段请求网络连接,分段将文件保存到本地.
         // 加载下载位置缓存文件
 //        final File cacheFile = new File(mSaveDir, "thread" + threadId + "_" + fileName + ".cache");
         final File cacheFile = new File(VideoStorageUtils.getTempDir(VideoDownloadManager.getInstance().mConfig.context), "thread" + threadId + "_" + fileName + ".cache");
+        Log.e(TAG,"asdf fileName: "+cacheFile.getAbsolutePath() );
+
         mCacheFiles[threadId] = cacheFile;
         final RandomAccessFile cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
         if (cacheFile.exists()) {
@@ -228,9 +234,10 @@ public class Android9Factory implements IDownloadFactory {
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
-
+            if (newStartIndex > endIndex) {
+                newStartIndex = startIndex;
+            }
         }
-        Log.i(TAG, "thread" + threadId + "rangge:" + newStartIndex+"- "+endIndex);
         final long finalStartIndex = newStartIndex;
         Map<String, String> header = new HashMap<>();
         header.put("User-Agent", VideoDownloadUtils.getUserAgent());
@@ -243,6 +250,11 @@ public class Android9Factory implements IDownloadFactory {
         if(mTaskItem.header!=null){
             header.putAll(mTaskItem.header);
         }
+//        for (Map.Entry<String, String> entry : header.entrySet()) {
+//            String key = entry.getKey();
+//            String value = entry.getValue();
+//            Log.e("asdf","trhead:"+threadId+", key: "+key+", value: "+value);
+//        }
         try {
             OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, header, new OkHttpUtil.RequestCallback() {
                 @Override
@@ -250,8 +262,12 @@ public class Android9Factory implements IDownloadFactory {
                     int code = response.code();
 
                     if (!response.isSuccessful()) {
+                        if(code==416){
+                            notifyError(new Exception("code=416"));
+                            return;
+                        }
                         // 206：请求部分资源时的成功码,断点下载的成功码
-                        retry(startIndex, endIndex, threadId, new Exception("server error:"+code), DOWNLOAD_TYPE_RANGE,code);
+                        retry(startIndex, endIndex, threadId, new Exception("downloadByRange server error:"+code), DOWNLOAD_TYPE_RANGE,code);
                         return;
                     }
 
@@ -304,7 +320,7 @@ public class Android9Factory implements IDownloadFactory {
                     int code = response.code();
                     if (!response.isSuccessful()) {
                         // 206：请求部分资源时的成功码,断点下载的成功码
-                        retry(startIndex, endIndex, threadId, new Exception("server error "+code), DOWNLOAD_TYPE_ALL,code);
+                        retry(startIndex, endIndex, threadId, new Exception("downloadByAll server error "+code), DOWNLOAD_TYPE_ALL,code);
                         return;
                     }
                     handlerResponse(startIndex, endIndex, threadId, startIndex, response, null, null, DOWNLOAD_TYPE_ALL);
@@ -472,6 +488,7 @@ public class Android9Factory implements IDownloadFactory {
             childFinshCount.getAndAdd(1);
             Log.e(TAG,"childFinshCount:"+childFinshCount.get()+" "+time);
             //删除临时文件
+            close(cacheAccessFile, is, response.body());
             cleanFile(cacheFile);
         } catch (Exception e) {
             e.printStackTrace();
@@ -514,7 +531,7 @@ public class Android9Factory implements IDownloadFactory {
         } else if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
             try {
                 if (retryType == DOWNLOAD_TYPE_RANGE) {
-                    downloadByRange(startIndex, endIndex, threadId);
+                    downloadByRange(startIndex, endIndex, threadId,true);
                 } else {
                     downloadByAll(startIndex, endIndex, threadId);
                 }
@@ -553,6 +570,9 @@ public class Android9Factory implements IDownloadFactory {
     }
 
     private void notifyError(Exception e) {
+        if(cancel){
+            return;
+        }
         e.printStackTrace();
         cancel = true;
         mWriteFileThread.isStop = true;
@@ -602,10 +622,10 @@ public class Android9Factory implements IDownloadFactory {
             } else if (supportBreakpoint && mFileLength > 0) {
 
                 mTotalThreadCount = VideoDownloadUtils.getBlockCount(mFileLength);
-                Log.e(TAG,"mTotalThreadCount:"+mTotalThreadCount);
+//                Log.e(TAG,"mTotalThreadCount:"+mTotalThreadCount);
                 mProgress = new long[mTotalThreadCount];
                 this.mCacheFiles = new File[mTotalThreadCount];
-//                Log.e(TAG,"文件大小："+mFileLength+"分段数量："+mTotalThreadCount);
+                Log.e(TAG,"asdf 文件大小："+mFileLength+"分段数量："+mTotalThreadCount);
                 if (mTotalThreadCount == 1) {
                     handlerResponse(0, 0, 0, 0, response, null, null, DOWNLOAD_TYPE_ALL);
                 }else {
@@ -618,7 +638,7 @@ public class Android9Factory implements IDownloadFactory {
                         if (threadId == (mTotalThreadCount - 1)) { // 如果是最后一个线程,将剩下的文件全部交给这个线程完成
                             endIndex = mFileLength - 1;
                         }
-                        downloadByRange(startIndex, endIndex, threadId);// 开启线程下载
+                        downloadByRange(startIndex, endIndex, threadId,false);// 开启线程下载
                     }
                     //关闭资源
                     close(response.body());
@@ -723,8 +743,30 @@ public class Android9Factory implements IDownloadFactory {
         if(files==null)
             return;
         for (File file : files) {
-            if (null != file)
-                file.delete();
+            if (file != null) {
+                Path path = null;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    path = Paths.get(file.getAbsolutePath());
+                    try {
+                        Files.delete(path);
+                        Log.e(TAG, "asdf =====delete file suc:"+file.getAbsolutePath());
+                    } catch (IOException e) {
+                        Log.e(TAG, "asdf =====delete file fail:"+file.getAbsolutePath());
+                        System.out.println("文件删除失败: " + e.getMessage());
+                    }
+                } else {
+                    boolean result = file.delete();
+                    if (!result) {
+                        file.deleteOnExit();
+                        Log.e(TAG, "asdf =====delete file fail:" + file.getAbsolutePath());
+                    } else {
+                        Log.e(TAG, "asdf =====delete file suc:" + file.getAbsolutePath());
+                    }
+                }
+
+
+
+            }
         }
     }
 

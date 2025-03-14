@@ -34,6 +34,7 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
         public static final String SORT = "_sort";
         public static final String FILE_HASH = "file_hash";
         public static final String PRIVATE_FILE = "private_file";
+        public static final String OVERWRITE = "overwrite";
         public static final String SOURCE_URL = "source_url";
         public static final String SUFFIX = "suffix";
         public static final String VIDEO_LENGTH = "video_length";
@@ -63,6 +64,7 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
 
         if (oldVersion == 1) {
             db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.M3U8_FILE_PATH + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_VIDEO_DOWNLOAD_INFO + " ADD COLUMN " + Columns.OVERWRITE + " TEXT");
         }
 
     }
@@ -96,6 +98,7 @@ public class VideoDownloadSQLiteHelper extends SQLiteOpenHelper {
                 + Columns.SORT + " BIGINT, "
                 + Columns.FILE_HASH + " TEXT, "
                 + Columns.PRIVATE_FILE + " TEXT, "
+                + Columns.OVERWRITE + " TEXT, "
                 + Columns.SPEED + " TEXT, "
                 + Columns.SUFFIX + " TEXT, "
                 + Columns.NEWFILE + " TEXT, "

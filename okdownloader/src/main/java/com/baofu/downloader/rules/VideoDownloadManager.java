@@ -489,6 +489,7 @@ public class VideoDownloadManager {
                 @Override
                 public void onTaskFinished(long totalSize) {
                     if (taskItem.getTaskState() != VideoTaskState.SUCCESS) {
+                        Log.e("asdf","onTaskFinished");
                         taskItem.newFile = 1;
                         taskItem.setDownloadSize(totalSize);
                         taskItem.setTotalSize(totalSize);
@@ -542,7 +543,7 @@ public class VideoDownloadManager {
                 @Override
                 public void onTaskFailed(Exception e) {
                     Exception exception = new Exception(TAG2 + "startDownloadTask: "+e.getMessage());
-
+                    Log.e("asdf","==onTaskFailed");
                     notifyError(taskItem,exception);
                 }
             });

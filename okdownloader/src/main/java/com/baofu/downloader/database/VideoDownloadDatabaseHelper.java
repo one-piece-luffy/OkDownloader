@@ -108,6 +108,7 @@ public class VideoDownloadDatabaseHelper {
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_HASH, item.mFileHash);
             values.put(VideoDownloadSQLiteHelper.Columns.SORT, item.sort);
             values.put(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE, item.privateFile+"");
+            values.put(VideoDownloadSQLiteHelper.Columns.OVERWRITE, item.overwrite+"");
             values.put(VideoDownloadSQLiteHelper.Columns.SPEED, item.getSpeed());
             values.put(VideoDownloadSQLiteHelper.Columns.SOURCE_URL, item.sourceUrl);
             values.put(VideoDownloadSQLiteHelper.Columns.SUFFIX, item.suffix);
@@ -155,6 +156,7 @@ public class VideoDownloadDatabaseHelper {
             values.put(VideoDownloadSQLiteHelper.Columns.SORT, item.sort);
             values.put(VideoDownloadSQLiteHelper.Columns.FILE_HASH, item.mFileHash);
             values.put(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE, item.privateFile+"");
+            values.put(VideoDownloadSQLiteHelper.Columns.OVERWRITE, item.overwrite+"");
             values.put(VideoDownloadSQLiteHelper.Columns.SPEED, item.getSpeed());
             values.put(VideoDownloadSQLiteHelper.Columns.SOURCE_URL, item.sourceUrl);
             values.put(VideoDownloadSQLiteHelper.Columns.QUALITY, item.quality);
@@ -266,6 +268,8 @@ public class VideoDownloadDatabaseHelper {
                     item.mFileHash=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.FILE_HASH));
                     String pf=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.PRIVATE_FILE));
                     item.privateFile= "true".equals(pf);
+                    String overStr=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.OVERWRITE));
+                    item.overwrite= "true".equals(overStr);
                     item.sourceUrl=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.SOURCE_URL));
                     item.quality=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.QUALITY));
                     item.suffix=cursor.getString(cursor.getColumnIndex(VideoDownloadSQLiteHelper.Columns.SUFFIX));

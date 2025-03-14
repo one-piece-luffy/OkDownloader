@@ -42,6 +42,10 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -323,7 +327,7 @@ public class Android10FastFactory implements IDownloadFactory {
                         mTotalThreadCount = VideoDownloadUtils.getBlockCount(mFileLength);
                         mProgress = new long[mTotalThreadCount];
                         mCacheFiles = new File[mTotalThreadCount];
-//                        Log.e(TAG,"文件大小："+mFileLength+"分段数量："+mTotalThreadCount);
+                        Log.e(TAG,"asdf 文件大小："+mFileLength+"分段数量："+mTotalThreadCount);
                         if (mTotalThreadCount == 1) {
                             //只有一段，直接下载
                             handlerResponse(0, 0, 0, 0, response, DOWNLOAD_TYPE_ALL);
@@ -669,7 +673,10 @@ public class Android10FastFactory implements IDownloadFactory {
             return;
         }
         long newStartIndex = startIndex;
+        Log.e(TAG,"asdf thread"+threadId+" RANGE: "+startIndex+"-"+endIndex);
+
         final File cacheFile = new File(VideoStorageUtils.getTempDir(VideoDownloadManager.getInstance().mConfig.context), "thread" + threadId + "_" + fileName + ".cache");
+        Log.e(TAG,"asdf fileName: "+cacheFile.getAbsolutePath() );
         mCacheFiles[threadId] = cacheFile;
         final RandomAccessFile cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
         if (cacheFile.exists()) {
@@ -678,10 +685,14 @@ public class Android10FastFactory implements IDownloadFactory {
                 if (!TextUtils.isEmpty(startIndexStr)) {
                     newStartIndex = Long.parseLong(startIndexStr);//重新设置下载起点
                 }
+
+
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
-
+            if (newStartIndex > endIndex) {
+                newStartIndex = startIndex;
+            }
         }
 
         final long finalStartIndex = newStartIndex;
@@ -699,11 +710,20 @@ public class Android10FastFactory implements IDownloadFactory {
         if(mTaskItem.header!=null){
             header.putAll(mTaskItem.header);
         }
+//        for (Map.Entry<String, String> entry : header.entrySet()) {
+//            String key = entry.getKey();
+//            String value = entry.getValue();
+//            Log.e("asdf","trhead:"+threadId+", key: "+key+", value: "+value);
+//        }
         OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, header, new OkHttpUtil.RequestCallback() {
             @Override
             public void onResponse(Response response) throws IOException {
                 int code = response.code();
                 if (!response.isSuccessful()) {
+                    if (code == 416) {
+                        notifyError(new Exception("code=416"));
+                        return;
+                    }
                     // 206：请求部分资源时的成功码,断点下载的成功码
                     retry(startIndex, endIndex, threadId, new Exception("server error not 206:"+ code), DOWNLOAD_TYPE_RANGE,code);
                     return;
@@ -917,6 +937,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 notifyProgress(p, mFileLength);
 
             }
+            close(is, response.body());
             //删除临时文件
             cleanFile(mCacheFiles[threadId]);
 //            final String name=Thread.currentThread().getName();
@@ -996,6 +1017,9 @@ public class Android10FastFactory implements IDownloadFactory {
     }
 
     private void notifyError(Exception e) {
+        if(cancel){
+            return;
+        }
         e.printStackTrace();
         cancel = true;
         mWriteFileThread.isStop = true;
@@ -1158,11 +1182,13 @@ public class Android10FastFactory implements IDownloadFactory {
         if(files==null)
             return;
         for (File file : files) {
-            if (file != null) {
-                boolean result = file.delete();
-                if (result) {
-                    Log.i(TAG, "delete fail");
-                }
+            Path path = Paths.get(file.getAbsolutePath());
+            try {
+                Files.delete(path);
+                Log.e(TAG, "asdf =====delete file suc:"+file.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e(TAG, "asdf =====delete file fail:"+file.getAbsolutePath());
+                System.out.println("文件删除失败: " + e.getMessage());
             }
         }
     }

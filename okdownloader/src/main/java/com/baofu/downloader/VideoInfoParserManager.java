@@ -62,6 +62,7 @@ public class VideoInfoParserManager {
                 taskItem.suffix = VideoDownloadUtils.M3U8_SUFFIX;
 
                 String saveName = VideoDownloadUtils.getFileName(taskItem, null, false);
+                //todo  如果先下载到公有目录，再下载到私有目录 会导致保存下载进度的cache file 有问题，因为都是一个名字
                 //需要用私有目录，不然android10以上没有权限
                 File dir = new File(VideoDownloadManager.getInstance().mConfig.privatePath, saveName);
                 //同名文件处理
