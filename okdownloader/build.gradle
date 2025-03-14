@@ -1,4 +1,8 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
+
 
 android {
     compileSdk 35
@@ -22,6 +26,15 @@ android {
 
     namespace 'com.baofu.downloader'
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+
 }
 
 dependencies {
@@ -34,6 +47,12 @@ dependencies {
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
     implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
 //    api "androidx.work:work-runtime:2.8.1"
+
+    // 数据库
+    implementation "androidx.room:room-runtime:2.6.1"
+
+    kapt "androidx.room:room-compiler:2.6.1"
+//    annotationProcessor "androidx.room:room-compiler2.6.1"
 
 }
 

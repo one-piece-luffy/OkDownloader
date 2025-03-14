@@ -16,6 +16,7 @@ import androidx.databinding.DataBindingUtil;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
+import com.baofu.downloader.utils.VideoDownloadUtils;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
 import com.baofu.permissionhelper.PermissionUtil;
@@ -72,9 +73,9 @@ public class MainActivity extends AppCompatActivity {
         Map<String,String> header=new HashMap<>();
 //                header.put("Range","bytes=0-14188543");
         header.put("referer",link);
-        item.header=header;
+        item.header= VideoDownloadUtils.mapToJsonString(header);
         item.notify=true;
-        item.privateFile=true;
+        item.privateFile=false;
 
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改

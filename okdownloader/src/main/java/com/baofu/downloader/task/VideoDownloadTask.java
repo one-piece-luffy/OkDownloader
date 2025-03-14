@@ -28,9 +28,6 @@ public abstract class VideoDownloadTask {
 
     protected VideoDownloadTask(VideoTaskItem taskItem) {
         mTaskItem = taskItem;
-        if (mTaskItem.header == null) {
-            mTaskItem.header = new HashMap<>();
-        }
         mFinalUrl = taskItem.getFinalUrl();
         initSaveDir();
     }

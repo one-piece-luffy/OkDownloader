@@ -4,19 +4,22 @@ import android.content.Intent;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 import com.baofu.downloader.m3u8.M3U8;
-import com.baofu.downloader.utils.DownloadConstans;
 import com.baofu.downloader.utils.VideoDownloadUtils;
-
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+@Entity(tableName = "VideoTaskItem")
 public class VideoTaskItem implements Cloneable, Parcelable {
 
-    public String mUrl;                 //下载视频的url
+    public int id;
+    @PrimaryKey
+    @NonNull
+    public String mUrl="-1";                 //下载视频的url
     public String mCoverUrl;            //封面图的url
     public String mCoverPath;           //封面图存储的位置
     public long mDownloadCreateTime;    //下载创建的时间
@@ -25,6 +28,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String mFinalUrl;            //30x跳转之后的url
     public int mErrorCode;              //当前任务下载错误码
     public int mVideoType;              //当前文件类型
+    @Ignore
     public M3U8 mM3U8;                  //M3U8结构,如果非M3U8,则为null
     public int mTotalTs;                //当前M3U8的总分片
     public int mCurTs;                  //当前M3U8已缓存的分片
@@ -42,9 +46,10 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String mM3u8FilePath;            //m3u8文件完整路径(包括文件名)
     public boolean mPaused;
     public String mName;//用于显示的名称
+    @Ignore
     public boolean isSelect;//是否选中
     public boolean merged;
-    public Map<String,String> header;//下载时带的请求头
+    public String header;//下载时带的请求头
     public String sourceUrl;//源网页地址
     public String suffix;//文件名后缀
     public int newFile;//1新文件，0不新
@@ -58,54 +63,50 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String quality;
     //序号，下载后进行排序
     public int sort;
-
-    /**
-     * 以下的字段不用写入数据库
-     */
-
-    // 下载成功 打点
-    public boolean pointSuccess = false;
-
-    // 下载失败打点
-    public boolean pointFail = false;
-    public boolean isDownloadSuc;//下载成功
-    public String contentType;
-    public int itemViewType;
-    public int id;
-    public boolean isConverting;
-    public boolean skipM3u8;
-    public Exception exception;
     //同名的话覆盖写入
     public boolean overwrite=true;
+
+    @Ignore
+    public boolean isDownloadSuc;//下载成功
+    @Ignore
+    public String contentType;
+    @Ignore
+    public int itemViewType;
+    @Ignore
+    public boolean isConverting;
+    @Ignore
+    public boolean skipM3u8;
+    @Ignore
+    public Exception exception;
+
     //下载分组：用于区分是网站下载还是ins下载的
     public String downloadGroup;
     // post/get
     public String method;
-    //自定义消息，不存入数据库
-    public String message;
 
+    //自定义消息，不存入数据库
+    @Ignore
+    public String message;
+    @Ignore
     public int notificationId;
     //sort为空时，用sort2排序
     public int sort2;
     //是否开启通知
+    @Ignore
     public boolean notify = true;
 
 
 
 
     public VideoTaskItem(String url) {
-        this(url, "");
+        mUrl = url;
     }
 
-    public VideoTaskItem(String url, String coverUrl) {
-        mUrl = url;
-        mCoverUrl = coverUrl;
-    }
     public VideoTaskItem(String url, String coverUrl,String name,String sourceUrl,String quality,Map<String,String> header) {
         mUrl = url;
         mCoverUrl = coverUrl;
         mName = name;
-        this.header=header;
+        this.header=VideoDownloadUtils.mapToJsonString(header);
         this.sourceUrl=sourceUrl;
         this.quality = quality;
     }
@@ -455,7 +456,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         intent.putExtra("downloadGroup", downloadGroup);
         intent.putExtra("notificationId", notificationId);
         intent.putExtra("groupId", groupId);
-        intent.putExtra("header", JSON.toJSONString(header));
+        intent.putExtra("header", header);
     }
     public static VideoTaskItem getItemByIntent(Intent intent){
         if(intent==null){
@@ -480,11 +481,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.notificationId=intent.getIntExtra("notificationId",0);
         item.sort=intent.getIntExtra("sort",0);
         String headerJson=intent.getStringExtra("header");
-        Map<String, String> header = new ConcurrentHashMap<>();
-        if (!TextUtils.isEmpty(headerJson)) {
-            header = JSON.parseObject(headerJson, Map.class);
-        }
-        item.header=header;
+        item.header=headerJson;
         return item;
     }
 

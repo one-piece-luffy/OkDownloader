@@ -232,7 +232,7 @@ public class VideoDownloadManager {
                     if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(taskItem.method)) {
                         method = OkHttpUtil.METHOD.POST;
                     }
-                    Response response = OkHttpUtil.getInstance().requestSync(taskItem.getUrl(),method,taskItem.header);
+                    Response response = OkHttpUtil.getInstance().requestSync(taskItem.getUrl(),method,VideoDownloadUtils.getTaskHeader(taskItem));
                     if (response == null) {
                         int errorCode = -1;
                         taskItem.setErrorCode(errorCode);
@@ -268,7 +268,7 @@ public class VideoDownloadManager {
                     if (taskItem.getUrl().contains(Video.TypeInfo.M3U8) || VideoDownloadUtils.isM3U8Mimetype(contentType) || isM3u8Txt) {
                         //这是M3U8视频类型
                         taskItem.setMimeType(Video.TypeInfo.M3U8);
-                        VideoInfoParserManager.getInstance().parseNetworkM3U8Info(taskItem, taskItem.header, new IVideoInfoListener() {
+                        VideoInfoParserManager.getInstance().parseNetworkM3U8Info(taskItem, VideoDownloadUtils.getTaskHeader(taskItem), new IVideoInfoListener() {
                             @Override
                             public void onFinalUrl(String finalUrl) {
 
@@ -776,7 +776,7 @@ public class VideoDownloadManager {
      */
     public List<VideoTaskItem> getDownloadInfos() {
         if(mConfig.openDb){
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(null,null,VideoDownloadSQLiteHelper.Columns._ID + " DESC ",-1,-1);
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(-1,-1);
             if(taskItems==null||taskItems.isEmpty()){
                 return null;
             }
@@ -795,7 +795,7 @@ public class VideoDownloadManager {
     public List<VideoTaskItem> getDownloadInfos(String selection,String[] selectionArgs,String orderby,int offset,int limit) {
         if(mConfig.openDb){
 
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(selection,selectionArgs,orderby,offset,limit);
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(offset,limit);
             return taskItems;
         }
         return null;
@@ -803,7 +803,7 @@ public class VideoDownloadManager {
 
     public VideoTaskItem findVideoTask(String url, String sourceUrl, String quality) {
         if(mConfig.openDb){
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos( null,null,VideoDownloadSQLiteHelper.Columns.DOWNLOAD_TIME + " DESC ",-1,-1);
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos( -1,-1);
             if (taskItems == null) {
                 return null;
             }

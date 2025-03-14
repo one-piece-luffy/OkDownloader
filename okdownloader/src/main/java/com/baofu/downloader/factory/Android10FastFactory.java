@@ -20,6 +20,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.IFactoryListener;
 import com.baofu.downloader.model.VideoTaskItem;
@@ -171,7 +173,8 @@ public class Android10FastFactory implements IDownloadFactory {
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
-            Response response = OkHttpUtil.getInstance().requestSync(url,method,mTaskItem.header);
+
+            Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
             int code=response.code();
             if(code>=200&&code<300) {
 //            long dif=System.currentTimeMillis()-start;
@@ -496,8 +499,9 @@ public class Android10FastFactory implements IDownloadFactory {
         if (!TextUtils.isEmpty(eTag)) {
             header.put("ETag", eTag);
         }
-        if(mTaskItem.header!=null){
-            header.putAll(mTaskItem.header);
+        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        if(taskHeader!=null){
+            header.putAll(taskHeader);
         }
         try {
             Response response = OkHttpUtil.getInstance().requestSync(mTaskItem.getUrl(),method, header);
@@ -707,8 +711,9 @@ public class Android10FastFactory implements IDownloadFactory {
         if (!TextUtils.isEmpty(eTag)) {
             header.put("ETag", eTag);
         }
-        if(mTaskItem.header!=null){
-            header.putAll(mTaskItem.header);
+        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        if(taskHeader!=null){
+            header.putAll(taskHeader);
         }
 //        for (Map.Entry<String, String> entry : header.entrySet()) {
 //            String key = entry.getKey();
@@ -770,7 +775,7 @@ public class Android10FastFactory implements IDownloadFactory {
             return;
         }
         Log.i(TAG,"download all start");
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, mTaskItem.header, new OkHttpUtil.RequestCallback() {
+        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
             @Override
             public void onResponse(@NotNull Response response)  {
                 int code = response.code();
@@ -1122,7 +1127,7 @@ public class Android10FastFactory implements IDownloadFactory {
         }
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                OkHttpUtil.getInstance().request(downPathUrl,method,mTaskItem.header, new OkHttpUtil.RequestCallback() {
+                OkHttpUtil.getInstance().request(downPathUrl,method,VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
                     @Override
                     public void onFailure( @NonNull Exception e) {
                         if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {

@@ -44,6 +44,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +84,12 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         mTsList = m3u8.getTsList();
         mTotalTs = mTsList.size();
         mPercent = taskItem.getPercent();
-        mTaskItem.header.put("Connection", "close");
+        // TODO: 2025/3/14
+        Map<String,String> header=VideoDownloadUtils.getTaskHeader(taskItem);
+        if(header!=null){
+            header.put("Connection", "close");
+            mTaskItem.header=VideoDownloadUtils.mapToJsonString(header);
+        }
         mTaskItem.setTotalTs(mTotalTs);
         mTaskItem.setCurTs(mCurTs);
 
@@ -647,7 +653,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
-            response = OkHttpUtil.getInstance().requestSync(videoUrl,method, mTaskItem.header);
+            response = OkHttpUtil.getInstance().requestSync(videoUrl,method, VideoDownloadUtils.getTaskHeader(mTaskItem));
 
             if (response != null) {
                 responseCode = response.code();
