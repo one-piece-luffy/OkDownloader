@@ -10,12 +10,16 @@ import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.baofu.downloader.R;
 import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 public class VideoStorageUtils {
@@ -79,7 +83,8 @@ public class VideoStorageUtils {
     public static void deleteFile(Context context, String filePath) {
         if (TextUtils.isEmpty(filePath))
             return;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q && !filePath.startsWith(VideoDownloadManager.getInstance().mConfig.privatePath)) {
+        if (context != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+                && !filePath.startsWith(VideoDownloadManager.getInstance().mConfig.privatePath)) {
             Cursor cursor = null;
             try {
                 Uri extnerl = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
@@ -106,28 +111,39 @@ public class VideoStorageUtils {
                 }
             }
         }
+
         try {
             File file = new File(filePath);
             if (file.exists()) {
-                boolean del = file.delete();
-                if (del) {
-                    if (context == null)
-                        return;
-                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-
-                        MediaScannerConnection.scanFile(context, new String[]{filePath}
-                                , new String[]{null}, new MediaScannerConnection.MediaScannerConnectionClient() {
-                                    @Override
-                                    public void onMediaScannerConnected() {
-
-                                    }
-
-                                    @Override
-                                    public void onScanCompleted(String path, Uri uri) {
-
-                                    }
-                                });
+                Path path = null;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    path = Paths.get(file.getAbsolutePath());
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
                     }
+                } else {
+                    boolean result = file.delete();
+                    if (!result) {
+                        file.deleteOnExit();
+                    }
+                }
+                if (context == null)
+                    return;
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+
+                    MediaScannerConnection.scanFile(context, new String[]{filePath}
+                            , new String[]{null}, new MediaScannerConnection.MediaScannerConnectionClient() {
+                                @Override
+                                public void onMediaScannerConnected() {
+
+                                }
+
+                                @Override
+                                public void onScanCompleted(String path, Uri uri) {
+
+                                }
+                            });
 
                 }
             }
@@ -141,25 +157,17 @@ public class VideoStorageUtils {
         return Looper.getMainLooper() == Looper.myLooper();
     }
     public static void delete(File file) throws IOException {
-        if(file==null)
+        if (file == null)
             return;
         try {
             if (file.isFile() && file.exists()) {
-                if (VideoDownloadManager.getInstance().mConfig.context != null) {
-                    deleteFile(VideoDownloadManager.getInstance().mConfig.context, file.getAbsolutePath());
-                } else {
-                    deleteOrThrow(file);
-                }
+                deleteFile(VideoDownloadManager.getInstance().mConfig.context, file.getAbsolutePath());
 
             } else {
                 cleanDirectory(file);
-                if (VideoDownloadManager.getInstance().mConfig.context != null) {
-                    deleteFile(VideoDownloadManager.getInstance().mConfig.context, file.getAbsolutePath());
-                } else {
-                    deleteOrThrow(file);
-                }
+                deleteFile(VideoDownloadManager.getInstance().mConfig.context, file.getAbsolutePath());
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -167,10 +175,19 @@ public class VideoStorageUtils {
 
     private static void deleteOrThrow(File file) throws IOException {
         if (file.exists()) {
-            boolean isDeleted = file.delete();
-            if (!isDeleted) {
-                throw new IOException(
-                        String.format("File %s can't be deleted", file.getAbsolutePath()));
+            Path path = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                path = Paths.get(file.getAbsolutePath());
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                boolean result = file.delete();
+                if (!result) {
+                    file.deleteOnExit();
+                }
             }
         }
     }
