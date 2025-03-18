@@ -23,9 +23,11 @@ import android.text.TextUtils;
 
 import androidx.annotation.RequiresApi;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.model.Video;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.rules.VideoDownloadManager;
 
 import java.io.Closeable;
 import java.io.File;
@@ -35,6 +37,7 @@ import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -669,5 +672,31 @@ public class VideoDownloadUtils {
         } finally {
             close(os);
         }
+    }
+
+    public static Map<String,String> getTaskHeader(VideoTaskItem item){
+        Map<String,String> result=null;
+        if(item!=null&&!TextUtils.isEmpty(item.header)){
+            try {
+                result = JSON.parseObject(item.header, new TypeReference<Map<String,String>>() {
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+    public static String mapToJsonString(Map<String,String> map){
+        String result=null;
+        if(map!=null){
+            try {
+                result= JSON.toJSONString(map);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
+        }
+
+        return result;
     }
 }
