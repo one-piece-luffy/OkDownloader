@@ -232,7 +232,7 @@ public class VideoDownloadManager {
                     if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(taskItem.method)) {
                         method = OkHttpUtil.METHOD.POST;
                     }
-                    Response response = OkHttpUtil.getInstance().requestSync(taskItem.getUrl(),method,VideoDownloadUtils.getTaskHeader(taskItem));
+                    Response response = OkHttpUtil.getInstance().requestSync(taskItem.getUrl(),method,taskItem.getHeader());
                     if (response == null) {
                         int errorCode = -1;
                         taskItem.setErrorCode(errorCode);
@@ -268,7 +268,7 @@ public class VideoDownloadManager {
                     if (taskItem.getUrl().contains(Video.TypeInfo.M3U8) || VideoDownloadUtils.isM3U8Mimetype(contentType) || isM3u8Txt) {
                         //这是M3U8视频类型
                         taskItem.setMimeType(Video.TypeInfo.M3U8);
-                        VideoInfoParserManager.getInstance().parseNetworkM3U8Info(taskItem, VideoDownloadUtils.getTaskHeader(taskItem), new IVideoInfoListener() {
+                        VideoInfoParserManager.getInstance().parseNetworkM3U8Info(taskItem, taskItem.getHeader(), new IVideoInfoListener() {
                             @Override
                             public void onFinalUrl(String finalUrl) {
 

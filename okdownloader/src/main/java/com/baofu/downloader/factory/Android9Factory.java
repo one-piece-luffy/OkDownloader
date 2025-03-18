@@ -133,7 +133,7 @@ public class Android9Factory implements IDownloadFactory {
         try {
             // 发起请求，从响应头获取文件信息
 //            Response response = OkHttpUtil.getInstance().getHeaderSync(url);
-            Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
+            Response response = OkHttpUtil.getInstance().requestSync(url,method,mTaskItem.getHeader());
             int code=response.code();
             if(code>=200&&code<300){
                 //            Log.i(TAG, "请求头================\n" + response.headers().toString());
@@ -247,7 +247,7 @@ public class Android9Factory implements IDownloadFactory {
                 header.put("ETag", eTag);
             }
         }
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        Map<String,String> taskHeader=mTaskItem.getHeader();
         if(taskHeader!=null){
             header.putAll(taskHeader);
         }
@@ -307,7 +307,7 @@ public class Android9Factory implements IDownloadFactory {
         Log.i(TAG,"download all start");
         Map<String, String> header = new HashMap<>();
         header.put("User-Agent", VideoDownloadUtils.getUserAgent());
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        Map<String,String> taskHeader=mTaskItem.getHeader();
         if(taskHeader!=null){
             header.putAll(taskHeader);
         }

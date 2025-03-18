@@ -85,10 +85,10 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         mTotalTs = mTsList.size();
         mPercent = taskItem.getPercent();
         // TODO: 2025/3/14
-        Map<String,String> header=VideoDownloadUtils.getTaskHeader(taskItem);
+        Map<String,String> header=taskItem.getHeader();
         if(header!=null){
             header.put("Connection", "close");
-            mTaskItem.header=VideoDownloadUtils.mapToJsonString(header);
+            mTaskItem.setHeader(header);
         }
         mTaskItem.setTotalTs(mTotalTs);
         mTaskItem.setCurTs(mCurTs);
@@ -653,7 +653,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
-            response = OkHttpUtil.getInstance().requestSync(videoUrl,method, VideoDownloadUtils.getTaskHeader(mTaskItem));
+            response = OkHttpUtil.getInstance().requestSync(videoUrl,method, mTaskItem.getHeader());
 
             if (response != null) {
                 responseCode = response.code();

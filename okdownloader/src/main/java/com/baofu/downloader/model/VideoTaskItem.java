@@ -9,6 +9,9 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 import java.util.Map;
@@ -49,7 +52,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     @Ignore
     public boolean isSelect;//是否选中
     public boolean merged;
-    public String header;//下载时带的请求头
+    private String header;//下载时带的请求头
     public String sourceUrl;//源网页地址
     public String suffix;//文件名后缀
     public int newFile;//1新文件，0不新
@@ -106,7 +109,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         mUrl = url;
         mCoverUrl = coverUrl;
         mName = name;
-        this.header=VideoDownloadUtils.mapToJsonString(header);
+        setHeader(header);
         this.sourceUrl=sourceUrl;
         this.quality = quality;
     }
@@ -376,40 +379,29 @@ public class VideoTaskItem implements Cloneable, Parcelable {
 
     }
 
-    public void reset() {
-        mTaskState = VideoTaskState.DEFAULT;
-        mDownloadCreateTime = 0L;
-        mMimeType = null;
-        mErrorCode = 0;
-        mVideoType = Video.Type.DEFAULT;
-        mTaskState = VideoTaskState.DEFAULT;
-        mM3U8 = null;
-        mSpeed = 0.0f;
-        mPercent = 0.0f;
-        mDownloadSize = 0;
-        mTotalSize = 0;
-        fileName = null;
-        mFilePath = null;
-        mM3u8FilePath = null;
-        mCoverUrl = null;
-        mCoverPath = null;
+    public void setHeader(Map<String, String> map) {
+        String result = null;
+        if (map != null) {
+            try {
+                result = JSON.toJSONString(map);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        this.header = result;
     }
-    public void startOver() {
-        mTaskState = VideoTaskState.DEFAULT;
-        mDownloadCreateTime = 0L;
-        mMimeType = null;
-        mErrorCode = 0;
-        mVideoType = Video.Type.DEFAULT;
-        mTaskState = VideoTaskState.DEFAULT;
-        mM3U8 = null;
-        mSpeed = 0.0f;
-        mPercent = 0.0f;
-        mDownloadSize = 0;
-        mTotalSize = 0;
-        fileName = null;
-        mFilePath = null;
-        mM3u8FilePath = null;
-        mIsCompleted=false;
+
+    public Map<String, String> getHeader() {
+        Map<String, String> result = null;
+        if (!TextUtils.isEmpty(header)) {
+            try {
+                result = JSON.parseObject(header, new TypeReference<Map<String, String>>() {
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
     }
 
     @Override
@@ -514,19 +506,6 @@ public class VideoTaskItem implements Cloneable, Parcelable {
             }
         }
         return false;
-    }
-
-    public String toString() {
-        return "VideoTaskItem[Url=" + mUrl +
-                ", Type=" + mVideoType +
-                ", Percent=" + mPercent +
-                ", DownloadSize=" + mDownloadSize +
-                ", State=" + mTaskState +
-                ", fileName=" + fileName +
-                ", LocalFile=" + mFilePath +
-                ", CoverUrl=" + mCoverUrl +
-                ", CoverPath=" + mCoverPath +
-                "]";
     }
 
     @Override

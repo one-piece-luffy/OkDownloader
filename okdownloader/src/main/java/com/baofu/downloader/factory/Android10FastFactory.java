@@ -174,7 +174,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 method = OkHttpUtil.METHOD.POST;
             }
 
-            Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
+            Response response = OkHttpUtil.getInstance().requestSync(url,method,mTaskItem.getHeader());
             int code=response.code();
             if(code>=200&&code<300) {
 //            long dif=System.currentTimeMillis()-start;
@@ -499,7 +499,7 @@ public class Android10FastFactory implements IDownloadFactory {
         if (!TextUtils.isEmpty(eTag)) {
             header.put("ETag", eTag);
         }
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        Map<String,String> taskHeader=mTaskItem.getHeader();
         if(taskHeader!=null){
             header.putAll(taskHeader);
         }
@@ -711,7 +711,7 @@ public class Android10FastFactory implements IDownloadFactory {
         if (!TextUtils.isEmpty(eTag)) {
             header.put("ETag", eTag);
         }
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
+        Map<String,String> taskHeader=mTaskItem.getHeader();
         if(taskHeader!=null){
             header.putAll(taskHeader);
         }
@@ -775,7 +775,7 @@ public class Android10FastFactory implements IDownloadFactory {
             return;
         }
         Log.i(TAG,"download all start");
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
+        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, mTaskItem.getHeader(), new OkHttpUtil.RequestCallback() {
             @Override
             public void onResponse(@NotNull Response response)  {
                 int code = response.code();
@@ -1127,7 +1127,7 @@ public class Android10FastFactory implements IDownloadFactory {
         }
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                OkHttpUtil.getInstance().request(downPathUrl,method,VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
+                OkHttpUtil.getInstance().request(downPathUrl,method,mTaskItem.getHeader(), new OkHttpUtil.RequestCallback() {
                     @Override
                     public void onFailure( @NonNull Exception e) {
                         if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
