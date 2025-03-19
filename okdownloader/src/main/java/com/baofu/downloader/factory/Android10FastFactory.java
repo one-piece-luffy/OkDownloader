@@ -260,6 +260,9 @@ public class Android10FastFactory implements IDownloadFactory {
             String mimeType = mTaskItem.contentType;
             if (TextUtils.isEmpty(mimeType) && !TextUtils.isEmpty(mTaskItem.suffix)) {
                 mimeType = mTaskItem.suffix.replace(".", "");
+            } else if (!TextUtils.isEmpty(mimeType) && TextUtils.isEmpty(mTaskItem.suffix)) {
+                //MimeType 没有匹配到后缀，如果不置空mimeType,公有目录会默认添加后缀，导致文件路径和数据库存储的不一致
+                mimeType = null;
             }
             Uri uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, mimeType);
             if (uri == null) {
