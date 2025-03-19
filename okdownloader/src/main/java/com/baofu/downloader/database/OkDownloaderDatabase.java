@@ -10,7 +10,7 @@ import com.baofu.downloader.utils.ContextUtils;
 
 
 @Database(entities = { VideoTaskItem.class },
-        version = 1, exportSchema = false)
+        version = 2, exportSchema = false)
 abstract public class OkDownloaderDatabase extends RoomDatabase {
 
     private static OkDownloaderDatabase instance;

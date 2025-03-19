@@ -94,8 +94,13 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     //是否开启通知
     @Ignore
     public boolean notify = true;
+    public long createTime;
 
 
+    public static class Columns {
+        public static final String CREATE_TIME = "createTime";
+        public static final String SORT = "sort";
+    }
 
 
     public VideoTaskItem(String url) {

@@ -141,7 +141,7 @@ public class VideoDownloadManager {
     public void startDownload2(VideoTaskItem taskItem) {
         if (taskItem == null || TextUtils.isEmpty(taskItem.getUrl()))
             return;
-
+        taskItem.createTime=System.currentTimeMillis();
         synchronized (mQueueLock) {
             if (mVideoDownloadQueue.contains(taskItem)) {
                 try {
@@ -774,17 +774,17 @@ public class VideoDownloadManager {
      *
      * @return
      */
-    public List<VideoTaskItem> getDownloadInfos() {
+    public List<VideoTaskItem> getAll() {
         if(mConfig.openDb){
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(-1,-1);
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getAll();
             if(taskItems==null||taskItems.isEmpty()){
                 return null;
             }
-            for(VideoTaskItem item:taskItems){
-                if(item==null)
-                    continue;
-                mVideoItemTaskMap.put(item.getUrl(), item);
-            }
+//            for(VideoTaskItem item:taskItems){
+//                if(item==null)
+//                    continue;
+//                mVideoItemTaskMap.put(item.getUrl(), item);
+//            }
             return taskItems;
 
         }
@@ -792,10 +792,41 @@ public class VideoDownloadManager {
     }
 
 
-    public List<VideoTaskItem> getDownloadInfos(String selection,String[] selectionArgs,String orderby,int offset,int limit) {
+    /**
+     * 分页获取下载信息
+     * @param offset 开始位置
+     * @param limit  每页数量
+     * @return
+     */
+    public List<VideoTaskItem> getItemByPage(int offset,int limit) {
         if(mConfig.openDb){
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getItemByPage(offset,limit);
+            return taskItems;
+        }
+        return null;
+    }
 
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos(offset,limit);
+    /**
+     * 自定义查询语句，获取下载信息
+     * @return
+     */
+    public List<VideoTaskItem> getItemByQuery(String query) {
+        if(mConfig.openDb){
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getItemByQuery(query);
+            return taskItems;
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取当前的下载信息列表：包含正在下载和已完成的,并根据ID排序
+     *
+     * @return
+     */
+    public List<VideoTaskItem> getDownloadingItem() {
+        if (mConfig.openDb) {
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadingItem();
             return taskItems;
         }
         return null;
@@ -803,7 +834,7 @@ public class VideoDownloadManager {
 
     public VideoTaskItem findVideoTask(String url, String sourceUrl, String quality) {
         if(mConfig.openDb){
-            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getDownloadInfos( -1,-1);
+            List<VideoTaskItem> taskItems = mVideoDatabaseHelper.getAll( );
             if (taskItems == null) {
                 return null;
             }

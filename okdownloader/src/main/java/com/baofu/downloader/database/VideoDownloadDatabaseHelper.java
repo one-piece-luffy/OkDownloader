@@ -7,6 +7,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 
+import androidx.sqlite.db.SimpleSQLiteQuery;
+import androidx.sqlite.db.SupportSQLiteQuery;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.database.dao.VideoTaskItemDao;
@@ -82,11 +85,27 @@ public class VideoDownloadDatabaseHelper {
      * 分页获取下载数据
      *
      * @param offset 从第几条开始
-     * @param limit 每页几条数据，-1表示全部
+     * @param limit 每页几条数据，
      */
     @SuppressLint("Range")
-    public List<VideoTaskItem> getDownloadInfos( int offset, int limit) {
+    public List<VideoTaskItem> getItemByPage(int offset, int limit) {
+        List<VideoTaskItem> items = OkDownloaderDatabase.getInstance().videoTaskItemDao().getItemByPage(offset,limit);
+        return items;
+    }
+
+    @SuppressLint("Range")
+    public List<VideoTaskItem> getItemByQuery( String queryString) {
+        SupportSQLiteQuery query = new SimpleSQLiteQuery(queryString);
+        List<VideoTaskItem> items = OkDownloaderDatabase.getInstance().videoTaskItemDao().getItemByQuery(query);
+        return items;
+    }
+
+    public List<VideoTaskItem> getAll( ) {
         List<VideoTaskItem> items = OkDownloaderDatabase.getInstance().videoTaskItemDao().getAll();
+        return items;
+    }
+    public List<VideoTaskItem> getDownloadingItem( ) {
+        List<VideoTaskItem> items = OkDownloaderDatabase.getInstance().videoTaskItemDao().getDownloadingItem();
         return items;
     }
 
