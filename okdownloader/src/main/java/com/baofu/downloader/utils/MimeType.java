@@ -26,6 +26,7 @@ public class MimeType {
 //            put("text/plain", ".java");
 //            put(".jpeg", "image/jpeg");
             put("image/jpeg", ".jpg");
+            put("image/webp", ".webp");
             put("application/x-javascript", ".js");
 //            put("text/plain", ".log");
 
