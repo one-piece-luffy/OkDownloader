@@ -98,6 +98,7 @@ public class AllDownloadTask extends VideoDownloadTask {
         notifyOnTaskFailed(e);
         e.printStackTrace();
         Log.e("asdf", "error url:" + mTaskItem.getUrl());
+        Log.e("asdf", "error message:" + e.getMessage());
         isDownloading = false;
         mDownloadTaskListener.onTaskProgress(100, mTotalLength, mTotalLength, VideoDownloadConstants.ERROR_SPEED);
     }

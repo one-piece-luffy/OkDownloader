@@ -1190,6 +1190,9 @@ public class Android10FastFactory implements IDownloadFactory {
         if(files==null)
             return;
         for (File file : files) {
+            if (file == null) {
+                continue;
+            }
             Path path = Paths.get(file.getAbsolutePath());
             try {
                 Files.delete(path);
