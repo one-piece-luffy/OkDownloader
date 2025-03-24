@@ -23,20 +23,23 @@ import android.text.TextUtils;
 
 import androidx.annotation.RequiresApi;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.model.Video;
 import com.baofu.downloader.model.VideoTaskItem;
+
+import org.json.JSONObject;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -678,8 +681,16 @@ public class VideoDownloadUtils {
         Map<String,String> result=null;
         if(item!=null&&!TextUtils.isEmpty(item.header)){
             try {
-                result = JSON.parseObject(item.header, new TypeReference<Map<String,String>>() {
-                });
+                JSONObject jsonObject = new JSONObject(item.header);
+                result = new HashMap<>();
+                Iterator<String> keys = jsonObject.keys();
+
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    String value = jsonObject.getString(key);
+                    result.put(key, value);
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -690,12 +701,15 @@ public class VideoDownloadUtils {
         String result=null;
         if(map!=null){
             try {
-                result= JSON.toJSONString(map);
+                JSONObject jsonObject = new JSONObject(map);
+                result = jsonObject.toString();
             }catch (Exception e){
                 e.printStackTrace();
             }
 
         }
+
+
 
         return result;
     }

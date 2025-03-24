@@ -20,8 +20,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.IFactoryListener;
 import com.baofu.downloader.model.VideoTaskItem;
@@ -173,7 +171,7 @@ public class Android10FastFactory implements IDownloadFactory {
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
-
+  
             Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
             int code=response.code();
             if(code>=200&&code<300) {

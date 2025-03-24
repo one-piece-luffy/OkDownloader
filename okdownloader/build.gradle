@@ -41,7 +41,6 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.alibaba:fastjson:1.1.70.android'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 //    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
@@ -50,9 +49,11 @@ dependencies {
 
     // 数据库
     implementation "androidx.room:room-runtime:2.6.1"
-
     kapt "androidx.room:room-compiler:2.6.1"
 //    annotationProcessor "androidx.room:room-compiler2.6.1"
+
+//    implementation 'com.google.code.gson:gson:2.10.1'
+//    implementation 'com.alibaba:fastjson:1.1.70.android'
 
 }
 

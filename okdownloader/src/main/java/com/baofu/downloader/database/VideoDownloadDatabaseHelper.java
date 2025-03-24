@@ -1,24 +1,15 @@
 package com.baofu.downloader.database;
 
 import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
 
 import androidx.sqlite.db.SimpleSQLiteQuery;
 import androidx.sqlite.db.SupportSQLiteQuery;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
-import com.baofu.downloader.database.dao.VideoTaskItemDao;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.utils.LogUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class VideoDownloadDatabaseHelper {
 

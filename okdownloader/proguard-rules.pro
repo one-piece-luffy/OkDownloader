@@ -25,3 +25,4 @@
 -keep class com.baofu.downloader.utils.**{*;}
 -keep class com.baofu.downloader.database.**{*;}
 -keep class com.baofu.downloader.m3u8.**{*;}
+
