@@ -61,7 +61,7 @@ public class Android10FastFactory implements IDownloadFactory {
 
     //当前重试次数
     private int mRetryCount;
-    public final String TAG = getClass().getSimpleName()+": ";
+    public final String TAG = "Android10FastFactory: ";
     IFactoryListener listener;
     //文件大小
     long mFileLength;
@@ -102,6 +102,10 @@ public class Android10FastFactory implements IDownloadFactory {
     int mTotalThreadCount;
     String fileName;
     String method;
+    // 初始等待时间（毫秒）
+    private static final int INITIAL_DELAY = 3000;
+    // 重试的指数因子
+    private static final int FACTOR = 2;
 
     public Android10FastFactory(VideoTaskItem taskItem, IFactoryListener listener) {
         this.listener = listener;
@@ -171,7 +175,7 @@ public class Android10FastFactory implements IDownloadFactory {
             if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
                 method = OkHttpUtil.METHOD.POST;
             }
-  
+
             Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
             int code=response.code();
             if(code>=200&&code<300) {
@@ -223,29 +227,43 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 }
                 handlerData(response);
-            }else {
-                notifyError(new Exception(TAG+"initDownloadInfo: code:"+code+" message:"+response.message()));
+            } else if (code == HttpUtils.RESPONSE_503 || code == HttpUtils.RESPONSE_429 || code == HttpUtils.RESPONSE_509) {
+                mRetryCount++;
+                if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
+                    //遇到503，延迟后再重试，区间间隔不能太小
+                    //指数退避算法
+                    long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
+                    try {
+                        Thread.sleep(delay);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    Exception exception = new Exception(TAG + "initDownloadInfo1: code:" + code + " message:" + response.message());
+                    retryInit(url, exception);
+                } else {
+                    notifyError(new Exception(TAG + "initDownloadInfo2: code:" + code + " message:" + response.message()));
+                }
+
+            } else {
+                notifyError(new Exception(TAG + "initDownloadInfo3: code:" + code + " message:" + response.message()));
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "start:Exception "+Thread.currentThread().getName() + "\n"  + e.getMessage());
-
-            if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-                mRetryCount++;
-                resetStutus();
-                initDownloadInfo(url);
-            } else {
-                resetStutus();
-                try {
-                    handlerData(null);
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-            }
+            Log.e(TAG, "start:Exception " + Thread.currentThread().getName() + "\n" + e.getMessage());
+            mRetryCount++;
+            retryInit(url, e);
         }
-
     }
 
+    private void retryInit(String url,Exception exception){
+        if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
+            resetStutus();
+            initDownloadInfo(url);
+        } else {
+            resetStutus();
+            notifyError(exception);
+        }
+    }
 
     private void handlerData(Response response) {
         try {
@@ -695,6 +713,7 @@ public class Android10FastFactory implements IDownloadFactory {
             } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
+            //解决http 416问题
             if (newStartIndex > endIndex) {
                 newStartIndex = startIndex;
             }
@@ -727,6 +746,7 @@ public class Android10FastFactory implements IDownloadFactory {
                 int code = response.code();
                 if (!response.isSuccessful()) {
                     if (code == 416) {
+                        //Range Not Satisfiable（请求范围不满足)
                         notifyError(new Exception("code=416"));
                         return;
                     }
@@ -966,12 +986,13 @@ public class Android10FastFactory implements IDownloadFactory {
         mRetryCount++;
         if (errCode == HttpUtils.RESPONSE_503 || errCode == HttpUtils.RESPONSE_429|| errCode == HttpUtils.RESPONSE_509) {
             if (mRetryCount <= MAX_RETRY_COUNT_503) {
-                //遇到503，延迟[4,20]秒后再重试，区间间隔不能太小
-                int ran = 4000 + (int) (Math.random() * 16000);
-                Log.e(TAG, "sleep:" + ran);
+                //遇到503，延迟后再重试，区间间隔不能太小
+                //指数退避算法
+                long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
+                Log.e(TAG, "sleep:" + delay);
                 suspendRange.set(true);
                 try {
-                    Thread.sleep(ran);
+                    Thread.sleep(delay);
                     synchronized (responseCode503) {
                         if (responseCode503.get()) {
                             responseCode503.set(false);
@@ -984,6 +1005,10 @@ public class Android10FastFactory implements IDownloadFactory {
                 } catch (Exception ex) {
                     e.printStackTrace();
                 }
+            } else {
+                resetStutus();
+                Exception ex = new Exception(TAG + "retry1: " + e.getMessage() + " code:" + errCode);
+                notifyError(ex);
             }
         } else if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
             try {
@@ -997,7 +1022,7 @@ public class Android10FastFactory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            Exception ex=new Exception(TAG+"retry: "+e.getMessage()+" code:"+errCode);
+            Exception ex=new Exception(TAG+"retry2: "+e.getMessage()+" code:"+errCode);
             notifyError(ex);
         }
     }
