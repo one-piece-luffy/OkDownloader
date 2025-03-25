@@ -176,9 +176,9 @@ public class Android10FastFactory implements IDownloadFactory {
                 method = OkHttpUtil.METHOD.POST;
             }
 
-            Response response = OkHttpUtil.getInstance().requestSync(url,method,VideoDownloadUtils.getTaskHeader(mTaskItem));
-            int code=response.code();
-            if(code>=200&&code<300) {
+            Response response = OkHttpUtil.getInstance().requestSync(url, method, VideoDownloadUtils.getTaskHeader(mTaskItem));
+            int code = response.code();
+            if (code >= 200 && code < 300) {
 //            long dif=System.currentTimeMillis()-start;
 //            Log.i(TAG,"耗时:"+dif+" "+ Thread.currentThread().getName());
 //            Log.i(TAG, "请求头================\n" + response.headers().toString());
@@ -227,41 +227,40 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
                 }
                 handlerData(response);
-            } else if (code == HttpUtils.RESPONSE_503 || code == HttpUtils.RESPONSE_429 || code == HttpUtils.RESPONSE_509) {
-                mRetryCount++;
-                if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-                    //遇到503，延迟后再重试，区间间隔不能太小
-                    //指数退避算法
-                    long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
-                    try {
-                        Thread.sleep(delay);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                    Exception exception = new Exception(TAG + "initDownloadInfo1: code:" + code + " message:" + response.message());
-                    retryInit(url, exception);
-                } else {
-                    notifyError(new Exception(TAG + "initDownloadInfo2: code:" + code + " message:" + response.message()));
-                }
-
             } else {
-                notifyError(new Exception(TAG + "initDownloadInfo3: code:" + code + " message:" + response.message()));
+                retryInit(url, code, response.message());
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "start:Exception " + Thread.currentThread().getName() + "\n" + e.getMessage());
-            mRetryCount++;
-            retryInit(url, e);
+            retryInit(url, -1,"initDownloadInfo: message:" + e.getMessage());
         }
     }
 
-    private void retryInit(String url,Exception exception){
-        if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
+    private void retryInit(String url,int code,String message){
+        mRetryCount++;
+        if (code == HttpUtils.RESPONSE_503 || code == HttpUtils.RESPONSE_429 || code == HttpUtils.RESPONSE_509) {
+
+            if (mRetryCount <= MAX_RETRY_COUNT_503) {
+                //遇到503，延迟后再重试，区间间隔不能太小
+                //指数退避算法
+                long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
+                Log.e("asdf", "delay:" + delay);
+                try {
+                    Thread.sleep(delay);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                resetStutus();
+                initDownloadInfo(url);
+            } else {
+                notifyError(new Exception(TAG + "retryInit1: code:" + code + " message:" + message));
+            }
+
+        } else if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
             resetStutus();
             initDownloadInfo(url);
         } else {
-            resetStutus();
-            notifyError(exception);
+            notifyError(new Exception(TAG + "retryInit2: code:" + code + " message:" + message));
         }
     }
 
