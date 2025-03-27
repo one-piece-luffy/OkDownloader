@@ -57,26 +57,15 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
-public class Android10FastFactory implements IDownloadFactory {
+public class Android10FastFactory extends BaseFactory {
 
-    //当前重试次数
-    private int mRetryCount;
+
     public final String TAG = "Android10FastFactory: ";
-    IFactoryListener listener;
-    //文件大小
-    long mFileLength;
-    VideoTaskItem mTaskItem;
-    private volatile boolean pause;//是否暂停
-    private volatile boolean cancel;//是否取消下载
-    final int BUFFER_SIZE = 1024 * 1024 * 2;
+
     private long[] mProgress;
-    public Queue<LocatedBuffer> mFileBuffersQueue;
+
     WriteFileThread mWriteFileThread;
     private File[] mCacheFiles;
-
-    private String eTag;
-    //断点续传
-    private boolean supportBreakpoint;
     // 存储类型，可选参数 DIRECTORY_PICTURES  ,DIRECTORY_MOVIES  ,DIRECTORY_MUSIC
     String inserType = DIRECTORY_DOWNLOADS;
     ParcelFileDescriptor pdf;
@@ -85,10 +74,7 @@ public class Android10FastFactory implements IDownloadFactory {
     FileOutputStream fos = null;
     //是否支持读写分离
     boolean mSplitReadWrite;
-    //读写分离总开关
-    final boolean ENABLE_SPLIT_READ_WRITE = false;
     //是否使用异步下载
-    final boolean asyncDownload = true;
     //分段下载方式：固定线程数
     final int RANGE_TYPE_THREAD = 1;
     //分段下载方式：固定阈值数
@@ -100,178 +86,23 @@ public class Android10FastFactory implements IDownloadFactory {
     private final AtomicBoolean suspendRange = new AtomicBoolean(false);
     private final AtomicInteger childFinshCount = new AtomicInteger(0);//子线程完成数量
     int mTotalThreadCount;
-    String fileName;
-    String method;
-    // 初始等待时间（毫秒）
-    private static final int INITIAL_DELAY = 3000;
-    // 重试的指数因子
-    private static final int FACTOR = 2;
+
 
     public Android10FastFactory(VideoTaskItem taskItem, IFactoryListener listener) {
-        this.listener = listener;
-        this.mTaskItem = taskItem;
-
-
-        mFileBuffersQueue = new LinkedList<>();
+        super(taskItem, listener);
         mWriteFileThread = new WriteFileThread();
         mRangeType = RANGE_TYPE_THREAD;
     }
 
-    @Override
-    public void download() {
-        DownloadExecutor.execute(() -> {
-            pause = false;
-            cancel = false;
-            try {
-                Log.i(TAG,"download 线程 :"+ Thread.currentThread().getName());
-                initDownloadInfo(mTaskItem.getUrl());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-
-    }
-
-    @Override
-    public void cancel() {
-        cancel = true;
-
-        resetStutus();
-    }
-
-    @Override
-    public void pause() {
-        pause = true;
-    }
-
-    @Override
-    public void resetStutus() {
-        pause = false;
-        cancel = false;
-        if (listener != null) {
-            listener.onReset();
-        }
-    }
 
     @Override
     public void delete() {
         cleanFile(mCacheFiles);
     }
 
-
-    private void initDownloadInfo(String url)  {
-        if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
-            notifyError(new Exception(URL_INVALID));
-            return;
-        }
-//        Log.i(TAG, "初始化，获取下载文件信息...");
-
+    @Override
+    void handlerData(Response response) {
         try {
-//            long start=System.currentTimeMillis();
-            // 发起请求，从响应头获取文件信息
-//            Response response = OkHttpUtil.getInstance().getHeaderSync(url);
-//            Log.i(TAG,"线程 start:"+ Thread.currentThread().getName());
-            method = OkHttpUtil.METHOD.GET;
-            if (OkHttpUtil.METHOD.POST.equalsIgnoreCase(mTaskItem.method)) {
-                method = OkHttpUtil.METHOD.POST;
-            }
-
-            Response response = OkHttpUtil.getInstance().requestSync(url, method, VideoDownloadUtils.getTaskHeader(mTaskItem));
-            int code = response.code();
-            if (code >= 200 && code < 300) {
-//            long dif=System.currentTimeMillis()-start;
-//            Log.i(TAG,"耗时:"+dif+" "+ Thread.currentThread().getName());
-//            Log.i(TAG, "请求头================\n" + response.headers().toString());
-
-
-                // 获取分块传输标志
-                String transferEncoding = response.header("Transfer-Encoding");
-                //分段传输标志，有这个标志不能获取到文件大小，就不能断点续传
-                boolean chunked = "chunked".equals(transferEncoding);
-//            Log.i(TAG, "是否分块传输：" + chunked);
-                // 没有分块传输才可获取到文件长度
-                if (!chunked) {
-                    String strLen = response.header("Content-Length");
-                    try {
-                        mFileLength = Long.parseLong(strLen);
-                    } catch (Exception e) {
-                        mFileLength = response.body().contentLength();
-                    }
-
-//                Log.e(TAG, "文件大小：" + VideoDownloadUtils.getSizeStr(mFileLength));
-                }
-                long freeSpace = VideoDownloadUtils.getFreeSpaceBytes(VideoDownloadManager.getInstance().mConfig.privatePath);
-//            Log.e(TAG,"free space:"+VideoDownloadUtils.getSizeStr(freeSpace));
-                if (mFileLength > freeSpace) {
-                    //存储空间不足
-                    notifyError(new Exception(NO_SPACE));
-//                Log.e(TAG,"存储空间不足");
-                    return;
-                }
-
-                // 是否支持断点续传
-                String acceptRanges = response.header("Accept-Ranges");
-                supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
-                eTag = response.header("ETag");
-//            Log.i(TAG, "是否支持断点续传：" + supportBreakpoint);
-//            Log.i(TAG, "ETag：" + eTag);
-                String contentType = response.header("Content-Type");
-//            Log.i(TAG, "content-type：" + contentType);
-                if (contentType != null) {
-                    mTaskItem.contentType = contentType;
-                    for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
-                        if (entry.getKey().contains(contentType)) {
-                            mTaskItem.suffix = entry.getValue();
-                            break;
-                        }
-                    }
-                }
-                handlerData(response);
-            } else {
-                retryInit(url, code, response.message());
-            }
-
-        } catch (Exception e) {
-            retryInit(url, -1,"initDownloadInfo: message:" + e.getMessage());
-        }
-    }
-
-    private void retryInit(String url,int code,String message){
-        mRetryCount++;
-        if (code == HttpUtils.RESPONSE_503 || code == HttpUtils.RESPONSE_429 || code == HttpUtils.RESPONSE_509) {
-
-            if (mRetryCount <= MAX_RETRY_COUNT_503) {
-                //遇到503，延迟后再重试，区间间隔不能太小
-                //指数退避算法
-                long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
-                Log.e("asdf", "delay:" + delay);
-                try {
-                    Thread.sleep(delay);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                resetStutus();
-                initDownloadInfo(url);
-            } else {
-                notifyError(new Exception(TAG + "retryInit1: code:" + code + " message:" + message));
-            }
-
-        } else if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-            resetStutus();
-            initDownloadInfo(url);
-        } else {
-            notifyError(new Exception(TAG + "retryInit2: code:" + code + " message:" + message));
-        }
-    }
-
-    private void handlerData(Response response) {
-        try {
-            mTaskItem.setTotalSize(mFileLength);
-            fileName = VideoDownloadUtils.getFileName(mTaskItem, null,true);
-            File file=new File(mTaskItem.getSaveDir()+ File.separator + fileName);
-            if(file.exists()&&!mTaskItem.overwrite){
-                fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "",true);
-            }
             String mimeType = mTaskItem.contentType;
             if (TextUtils.isEmpty(mimeType) && !TextUtils.isEmpty(mTaskItem.suffix)) {
                 mimeType = mTaskItem.suffix.replace(".", "");
@@ -282,8 +113,8 @@ public class Android10FastFactory implements IDownloadFactory {
             Uri uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, mimeType);
             if (uri == null) {
                 //创建失败，则重命名，重新创建
-                Log.e(TAG,"==================重命名");
-                fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "",true);
+                Log.e(TAG, "==================重命名");
+                fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "", true);
                 uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, mimeType);
             }
             //重建后还是没有uri，提示失败
@@ -348,7 +179,7 @@ public class Android10FastFactory implements IDownloadFactory {
                         mTotalThreadCount = VideoDownloadUtils.getBlockCount(mFileLength);
                         mProgress = new long[mTotalThreadCount];
                         mCacheFiles = new File[mTotalThreadCount];
-                        Log.e(TAG,"asdf 文件大小："+mFileLength+"分段数量："+mTotalThreadCount);
+                        Log.e(TAG, "asdf 文件大小：" + mFileLength + "分段数量：" + mTotalThreadCount);
                         if (mTotalThreadCount == 1) {
                             //只有一段，直接下载
                             handlerResponse(0, 0, 0, 0, response, DOWNLOAD_TYPE_ALL);
@@ -365,45 +196,12 @@ public class Android10FastFactory implements IDownloadFactory {
                                 }
                                 long finalEndIndex = endIndex;
                                 int finalThreadId = threadId;
-                                if (asyncDownload) {
-//                                    if(threadId==0){
-//                                        new Thread(){
-//                                            @Override
-//                                            public void run() {
-//                                                super.run();
-//                                                Looper.prepare();
-//                                                try {
-//                                                    Thread.sleep(2000);
-//                                                    downloadByRange(startIndex, finalEndIndex, finalThreadId);
-//                                                } catch (Exception e) {
-//                                                    e.printStackTrace();
-//                                                }
-//                                                Looper.loop();
-//                                            }
-//                                        }.start();
-//
-//
-//                                    }else {
-                                        downloadByRange(startIndex, finalEndIndex, finalThreadId);
-//                                    }
+                                downloadByRange(startIndex, finalEndIndex, finalThreadId);
 
-
-                                } else {
-                                    DownloadExecutor.execute(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                downloadByRangeSync(startIndex, finalEndIndex, finalThreadId);
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                    });
-                                }
 
                             }
                             //关闭资源
-                            close( response.body());
+                            close(response.body());
                         }
 
 
@@ -412,7 +210,7 @@ public class Android10FastFactory implements IDownloadFactory {
                         int count = (int) (mFileLength / threshold);// 计算线程的数量.
                         mTotalThreadCount = count;
                         mProgress = new long[count + 1];
-                        mCacheFiles = new File[count+1];
+                        mCacheFiles = new File[count + 1];
                         long startPos = 0, endPos = 0;
                         for (int i = 0; i < count; i++) {
                             startPos = (long) i * threshold;
@@ -420,36 +218,16 @@ public class Android10FastFactory implements IDownloadFactory {
                             long finalStartPos = startPos;
                             long finalEndPos = endPos;
                             int finalI = i;
-                            if (asyncDownload) {
-                                downloadByRange(finalStartPos, finalEndPos, finalI);
-                            } else {
-                                DownloadExecutor.execute(() -> {
-                                    try {
-                                        downloadByRangeSync(finalStartPos, finalEndPos, finalI);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
-                            }
+                            downloadByRange(finalStartPos, finalEndPos, finalI);
 
                         }
                         if (endPos < mFileLength - 1) {
                             long finalEndPos1 = endPos;
-                            if (asyncDownload) {
-                                downloadByRange(finalEndPos1 + 1, mFileLength, mProgress.length - 1);
-                            } else {
-                                DownloadExecutor.execute(() -> {
-                                    try {
-                                        downloadByRangeSync(finalEndPos1 + 1, mFileLength, mProgress.length - 1);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
-                            }
+                            downloadByRange(finalEndPos1 + 1, mFileLength, mProgress.length - 1);
 
                         }
                         //关闭资源
-                        close( response.body());
+                        close(response.body());
                     }
 
 
@@ -458,25 +236,11 @@ public class Android10FastFactory implements IDownloadFactory {
                     mTotalThreadCount = 1;
                     mProgress = new long[1];
                     mCacheFiles = new File[1];
-                    if (asyncDownload) {
 //                        downloadByRange(0, mFileLength, 0);// 开启线程下载
-                        if (response == null) {
-                            downloadByAll(0, 0, 0);
-                        } else {
-                            handlerResponse(0, 0, 0, 0, response, DOWNLOAD_TYPE_ALL);
-                        }
+                    if (response == null) {
+                        downloadByAll(0, 0, 0);
                     } else {
-                        DownloadExecutor.execute(() -> {
-                            try {
-                                if (response == null) {
-                                    downloadByRangeSync(0, mFileLength, 0);// 开启线程下载
-                                } else {
-                                    handlerResponse(0, 0, 0, 0, response, DOWNLOAD_TYPE_ALL);
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
+                        handlerResponse(0, 0, 0, 0, response, DOWNLOAD_TYPE_ALL);
                     }
                 }
             } else {
@@ -500,205 +264,22 @@ public class Android10FastFactory implements IDownloadFactory {
 
 
     /**
-     * 同步下载
-     *
-     * @param startIndex 开始位置
-     * @param endIndex 结束位置
-     * @param threadId 线程id
-     */
-    private void downloadByRangeSync(final long startIndex, final long endIndex, final int threadId) throws IOException {
-        if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
-            notifyError(new Exception(URL_INVALID));
-            return;
-        }
-        Map<String, String> header = new HashMap<>();
-        header.put("RANGE", "bytes=" + startIndex + "-" + endIndex);
-        header.put("User-Agent", VideoDownloadUtils.getUserAgent());
-        if (!TextUtils.isEmpty(eTag)) {
-            header.put("ETag", eTag);
-        }
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
-        if(taskHeader!=null){
-            header.putAll(taskHeader);
-        }
-        try {
-            Response response = OkHttpUtil.getInstance().requestSync(mTaskItem.getUrl(),method, header);
-            int code = response.code();
-            if (!response.isSuccessful()) {
-                // 206：请求部分资源时的成功码,断点下载的成功码
-                if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-                    mRetryCount++;
-                    try {
-                        downloadByRangeSync(startIndex, endIndex, threadId);
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                } else {
-                    resetStutus();
-                    notifyError(new Exception(TAG+"downloadByRangeSync: server error:"+code));
-                }
-                return;
-            }
-            ResponseBody body=response.body();
-            if (body == null) {
-                notifyError(new Exception(TAG+"downloadByRangeSync: response body is null"));
-                return;
-            }
-            InputStream is =body.byteStream();// 获取流
-//                final RandomAccessFile tmpAccessFile = new RandomAccessFile(mTmpFile, "rw");// 获取前面已创建的文件.
-//                tmpAccessFile.seek(finalStartIndex);// 文件写入的开始位置.
-            /*  将网络流中的文件写入本地*/
-            byte[] data = new byte[1024 << 3];
-            int length ;
-            int progress = 0;// 记录本次下载文件的大小
-
-            long rangeFileLength = body.contentLength();
-//            Log.e(TAG, "rangeFileLength:" + rangeFileLength);
-            int bufferSize = BUFFER_SIZE;
-            int position = 0;
-            int mCurrentLength = 0;
-            long startPostion = startIndex;
-            byte[] buffer = new byte[bufferSize << 1];
-            try {
-                while ((length = is.read(data)) > 0) {
-                    if (cancel) {
-                        //关闭资源
-                        mWriteFileThread.isStop = true;
-                        close(is, response.body());
-                        resetStutus();
-
-//                        VideoDownloadManager.getInstance().deleteVideoTask(mTaskItem.getUrl(), true);
-                        return;
-                    }
-                    if (pause) {
-                        mWriteFileThread.isStop = true;
-                        //关闭资源
-                        close(is, response.body());
-                        //发送暂停消息
-                        resetStutus();
-                        pause();
-                        return;
-                    }
-                    mCurrentLength += length;
-                    System.arraycopy(data, 0, buffer, position, data.length);
-                    position += length;
-
-                    if (mCurrentLength >= bufferSize) {
-                        if (mWriteFileThread != null && !mWriteFileThread.isStart) {
-                            mWriteFileThread.isStart = true;
-                            mWriteFileThread.start();
-                        }
-                        LocatedBuffer locatedBuffer = new LocatedBuffer();
-                        locatedBuffer.buffer = buffer;
-                        locatedBuffer.length = mCurrentLength;
-                        locatedBuffer.startPosition = startPostion;
-                        mFileBuffersQueue.offer(locatedBuffer);
-                        startPostion += mCurrentLength;
-                        position = 0;
-                        mCurrentLength = 0;
-                        buffer = new byte[bufferSize << 1];
-                    }
-
-
-                    progress += length;
-
-                    mProgress[threadId] = progress;
-                    if (progress >= rangeFileLength && rangeFileLength > 0) {
-                        if (mCurrentLength > 0) {
-                            if (mWriteFileThread != null && !mWriteFileThread.isStart) {
-                                mWriteFileThread.isStart = true;
-                                mWriteFileThread.start();
-                            }
-                            LocatedBuffer locatedBuffer = new LocatedBuffer();
-                            locatedBuffer.buffer = buffer;
-                            locatedBuffer.length = mCurrentLength;
-                            locatedBuffer.startPosition = startPostion;
-                            mFileBuffersQueue.offer(locatedBuffer);
-                            startPostion += mCurrentLength;
-                            mCurrentLength = 0;
-                            long p = 0;
-                            for (long i : mProgress) {
-                                p += i;
-                            }
-
-                            notifyProgress(p, mFileLength);
-                        }
-                    }
-                    //发送进度消息
-                    if (mFileLength > 0) {
-                        long p = 0;
-                        for (long i : mProgress) {
-                            p += i;
-                        }
-                        notifyProgress(p, mFileLength);
-                    }
-
-//                    ThreadPoolExecutor tpe = ((ThreadPoolExecutor) DownloadExecutor.getExecutorService());
-//                    int queueSize = tpe.getQueue().size();
-//                    int activeCount = tpe.getActiveCount();
-//                    long completedTaskCount = tpe.getCompletedTaskCount();
-//                    long taskCount = tpe.getTaskCount();
-//                    Log.i(TAG, "当前排队线程数：" + queueSize + " 当前活动线程数：" + activeCount + " 执行完成线程数：" + completedTaskCount + " 总线程数：" + taskCount);
-
-                }
-                if (mFileLength <= 0) {
-                    //没有获取到文件长度，下载完毕再更新进度
-                    notifyProgress(progress, progress);
-                }
-
-                //关闭资源
-                close(is, response.body());
-            } catch (Exception e) {
-                e.printStackTrace();
-                if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-                    mRetryCount++;
-                    try {
-                        downloadByRangeSync(startIndex, endIndex, threadId);
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                } else {
-                    resetStutus();
-                    Exception ex=new Exception(TAG+"downloadByRangeSync1: "+e.getMessage());
-                    notifyError(ex);
-                }
-
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-                mRetryCount++;
-                try {
-                    downloadByRangeSync(startIndex, endIndex, threadId);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            } else {
-                resetStutus();
-                Exception ex=new Exception(TAG+"downloadByRangeSync2:"+e.getMessage());
-                notifyError(ex);
-            }
-        }
-    }
-
-    /**
      * 分段下载
      *
      * @param startIndex 开始位置
-     * @param endIndex 结束位置
-     * @param threadId 线程id
+     * @param endIndex   结束位置
+     * @param threadId   线程id
      */
     private void downloadByRange(final long startIndex, final long endIndex, final int threadId) throws IOException {
-        if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
+        if (VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())) {
             notifyError(new Exception(URL_INVALID));
             return;
         }
         long newStartIndex = startIndex;
-        Log.e(TAG,"asdf thread"+threadId+" RANGE: "+startIndex+"-"+endIndex);
+        Log.e(TAG, "asdf thread" + threadId + " RANGE: " + startIndex + "-" + endIndex);
 
         final File cacheFile = new File(VideoStorageUtils.getTempDir(VideoDownloadManager.getInstance().mConfig.context), "thread" + threadId + "_" + fileName + ".cache");
-        Log.e(TAG,"asdf fileName: "+cacheFile.getAbsolutePath() );
+        Log.e(TAG, "asdf fileName: " + cacheFile.getAbsolutePath());
         mCacheFiles[threadId] = cacheFile;
         final RandomAccessFile cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
         if (cacheFile.exists()) {
@@ -721,7 +302,7 @@ public class Android10FastFactory implements IDownloadFactory {
         final long finalStartIndex = newStartIndex;
 
         Map<String, String> header = new HashMap<>();
-        if (supportBreakpoint ) {
+        if (supportBreakpoint) {
             header.put("RANGE", "bytes=" + newStartIndex + "-" + endIndex);
         }
         header.put("User-Agent", VideoDownloadUtils.getUserAgent());
@@ -730,8 +311,8 @@ public class Android10FastFactory implements IDownloadFactory {
         if (!TextUtils.isEmpty(eTag)) {
             header.put("ETag", eTag);
         }
-        Map<String,String> taskHeader=VideoDownloadUtils.getTaskHeader(mTaskItem);
-        if(taskHeader!=null){
+        Map<String, String> taskHeader = VideoDownloadUtils.getTaskHeader(mTaskItem);
+        if (taskHeader != null) {
             header.putAll(taskHeader);
         }
 //        for (Map.Entry<String, String> entry : header.entrySet()) {
@@ -739,7 +320,7 @@ public class Android10FastFactory implements IDownloadFactory {
 //            String value = entry.getValue();
 //            Log.e("asdf","trhead:"+threadId+", key: "+key+", value: "+value);
 //        }
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, header, new OkHttpUtil.RequestCallback() {
+        OkHttpUtil.getInstance().request(mTaskItem.getUrl(), method, header, new OkHttpUtil.RequestCallback() {
             @Override
             public void onResponse(Response response) throws IOException {
                 int code = response.code();
@@ -750,7 +331,7 @@ public class Android10FastFactory implements IDownloadFactory {
                         return;
                     }
                     // 206：请求部分资源时的成功码,断点下载的成功码
-                    retry(startIndex, endIndex, threadId, new Exception("server error not 206:"+ code), DOWNLOAD_TYPE_RANGE,code);
+                    retry(startIndex, endIndex, threadId, new Exception("server error not 206:" + code), DOWNLOAD_TYPE_RANGE, code);
                     return;
                 }
 
@@ -775,7 +356,7 @@ public class Android10FastFactory implements IDownloadFactory {
             @Override
             public void onFailure(Exception e) {
                 e.printStackTrace();
-                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_RANGE,-1);
+                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_RANGE, -1);
             }
         });
 
@@ -785,23 +366,29 @@ public class Android10FastFactory implements IDownloadFactory {
      * 全部下载，不分段
      *
      * @param startIndex 开始位置
-     * @param endIndex 结束位置
-     * @param threadId 线程id
+     * @param endIndex   结束位置
+     * @param threadId   线程id
      */
     private void downloadByAll(final long startIndex, final long endIndex, final int threadId) throws IOException {
 //        Log.i(TAG, "downloadByAll start "+name);
-        if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
+        if (VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())) {
             notifyError(new Exception(URL_INVALID));
             return;
         }
-        Log.i(TAG,"download all start");
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(),method, VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
+        Log.i(TAG, "download all start");
+        Map<String, String> header = new HashMap<>();
+        header.put("User-Agent", VideoDownloadUtils.getUserAgent());
+        Map<String, String> taskHeader = VideoDownloadUtils.getTaskHeader(mTaskItem);
+        if (taskHeader != null) {
+            header.putAll(taskHeader);
+        }
+        OkHttpUtil.getInstance().request(mTaskItem.getUrl(), method, header, new OkHttpUtil.RequestCallback() {
             @Override
-            public void onResponse(@NotNull Response response)  {
+            public void onResponse(@NotNull Response response) {
                 int code = response.code();
                 if (!response.isSuccessful()) {
                     // 206：请求部分资源时的成功码,断点下载的成功码
-                    retry(startIndex, endIndex, threadId, new Exception("server error:"+code), DOWNLOAD_TYPE_ALL,code);
+                    retry(startIndex, endIndex, threadId, new Exception("server error:" + code), DOWNLOAD_TYPE_ALL, code);
                     return;
                 }
 //                Log.i(TAG, "downloadByAll response "+name);
@@ -811,7 +398,7 @@ public class Android10FastFactory implements IDownloadFactory {
             @Override
             public void onFailure(@NotNull Exception e) {
                 e.printStackTrace();
-                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL,-2);
+                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL, -2);
             }
         });
 
@@ -819,15 +406,15 @@ public class Android10FastFactory implements IDownloadFactory {
 
     private void handlerResponse(final long startIndex, final long endIndex, final int threadId, final long finalStartIndex, Response response, int downloadtype) {
         if (response == null) {
-            notifyError(new Exception(TAG+"handlerResponse: response is null"));
+            notifyError(new Exception(TAG + "handlerResponse: response is null"));
             return;
         }
-        ResponseBody body=response.body();
+        ResponseBody body = response.body();
         if (body == null) {
-            notifyError(new Exception(TAG+"handlerResponse: body is null"));
+            notifyError(new Exception(TAG + "handlerResponse: body is null"));
             return;
         }
-        long len=0;
+        long len = 0;
         String strLen = response.header("Content-Length");
         try {
             len = Long.parseLong(strLen);
@@ -837,8 +424,8 @@ public class Android10FastFactory implements IDownloadFactory {
         }
         Log.i(TAG, "thread" + threadId + " 分段总大小:" + len);
 
-        RandomAccessFile cacheAccessFile=null;
-        if(mCacheFiles[threadId]!=null){
+        RandomAccessFile cacheAccessFile = null;
+        if (mCacheFiles[threadId] != null) {
             try {
                 cacheAccessFile = new RandomAccessFile(mCacheFiles[threadId], "rwd");
             } catch (FileNotFoundException e) {
@@ -846,7 +433,7 @@ public class Android10FastFactory implements IDownloadFactory {
             }
         }
 
-        InputStream is =body.byteStream();// 获取流
+        InputStream is = body.byteStream();// 获取流
 //                final RandomAccessFile tmpAccessFile = new RandomAccessFile(mTmpFile, "rw");// 获取前面已创建的文件.
 //                tmpAccessFile.seek(finalStartIndex);// 文件写入的开始位置.
         /*  将网络流中的文件写入本地*/
@@ -870,7 +457,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     mWriteFileThread.isStart = false;
                     //关闭资源
                     close(cacheAccessFile, is, response.body());
-                    Log.e(TAG,"suspend range downlaod");
+                    Log.e(TAG, "suspend range downlaod");
                     return;
                 }
                 if (cancel) {
@@ -929,7 +516,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     for (long i : mProgress) {
                         p += i;
                     }
-                    notifyProgress(p, mFileLength);
+                    notifyProgress(p, mFileLength, true);
                 }
 
 
@@ -948,18 +535,18 @@ public class Android10FastFactory implements IDownloadFactory {
 
 
             }
-            Log.e(TAG,"childFinshCount+1");
+            Log.e(TAG, "childFinshCount+1");
             childFinshCount.getAndAdd(1);
             if (mFileLength <= 0) {
                 mFileLength = progress;
                 //没有获取到文件长度，下载完毕再更新进度
-                notifyProgress(progress, progress);
+                notifyProgress(progress, progress, true);
             } else {
                 long p = 0;
                 for (long i : mProgress) {
                     p += i;
                 }
-                notifyProgress(p, mFileLength);
+                notifyProgress(p, mFileLength, true);
 
             }
             close(is, response.body());
@@ -968,9 +555,9 @@ public class Android10FastFactory implements IDownloadFactory {
 //            final String name=Thread.currentThread().getName();
 //            Log.i(TAG, "download finish "+"thread id:"+threadId+" "+name);
         } catch (Exception e) {
-            Log.e(TAG,""+e.getMessage());
+            Log.e(TAG, "" + e.getMessage());
             e.printStackTrace();
-            retry(startIndex, endIndex, threadId, e, downloadtype,-3);
+            retry(startIndex, endIndex, threadId, e, downloadtype, -3);
 
         } finally {
             //关闭资源
@@ -978,12 +565,12 @@ public class Android10FastFactory implements IDownloadFactory {
         }
     }
 
-    private void retry(final long startIndex, final long endIndex, final int threadId, Exception e, int downloadType,int errCode) {
+    private void retry(final long startIndex, final long endIndex, final int threadId, Exception e, int downloadType, int errCode) {
 //        Log.i(TAG, "threadid:"+threadId+"retry type:"+ downloadType+"   \n"+e.getMessage());
-        if(cancel||pause)
+        if (cancel || pause)
             return;
         mRetryCount++;
-        if (errCode == HttpUtils.RESPONSE_503 || errCode == HttpUtils.RESPONSE_429|| errCode == HttpUtils.RESPONSE_509) {
+        if (errCode == HttpUtils.RESPONSE_503 || errCode == HttpUtils.RESPONSE_429 || errCode == HttpUtils.RESPONSE_509) {
             if (mRetryCount <= MAX_RETRY_COUNT_503) {
                 //遇到503，延迟后再重试，区间间隔不能太小
                 //指数退避算法
@@ -1021,39 +608,34 @@ public class Android10FastFactory implements IDownloadFactory {
             }
         } else {
             resetStutus();
-            Exception ex=new Exception(TAG+"retry2: "+e.getMessage()+" code:"+errCode);
+            Exception ex = new Exception(TAG + "retry2: " + e.getMessage() + " code:" + errCode);
             notifyError(ex);
         }
     }
 
-    private void notifyProgress(long progress, long total) {
-
-        if (listener != null) {
-            listener.onProgress(progress, total,true);
-        }
-    }
 
     private void notifyFinish(long progress, long total) {
 
         mWriteFileThread.isStop = true;
         resetStutus();
         close(bufferedOutputStream, fos, pdf, channel);
-        mTaskItem.setFilePath(mTaskItem.getSaveDir()+ File.separator + fileName);
+        mTaskItem.setFilePath(mTaskItem.getSaveDir() + File.separator + fileName);
         if (listener != null) {
-            listener.onProgress(progress, total,true);
+            listener.onProgress(progress, total, true);
         }
 
 //        Log.i(TAG, "finish:"+mTaskItem.getUrl());
     }
 
-    private void notifyError(Exception e) {
-        if(cancel){
+    @Override
+    void notifyError(Exception e) {
+        if (cancel) {
             return;
         }
         e.printStackTrace();
         cancel = true;
         mWriteFileThread.isStop = true;
-        mTaskItem.exception=e;
+        mTaskItem.exception = e;
 //        notifyFinish(mFileLength,mFileLength);
         if (listener != null) {
             listener.onError(e);
@@ -1105,7 +687,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     total += length;
 
                     if (mFileLength > 0) {
-                        notifyProgress(total, mFileLength);
+                        notifyProgress(total, mFileLength, true);
                     }
                 }
                 bufferedOutputStream.flush();
@@ -1126,7 +708,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     ioException.printStackTrace();
                 }
             } else {
-                Exception ex=new Exception(TAG+"handPublicDir:"+e.getMessage());
+                Exception ex = new Exception(TAG + "handPublicDir:" + e.getMessage());
                 notifyError(ex);
             }
         } finally {
@@ -1142,19 +724,19 @@ public class Android10FastFactory implements IDownloadFactory {
      * 不支持读写分离的用这个方法下载
      *
      * @param downPathUrl 下载文件的路径，需要包含后缀
-     * date: 创建时间:2019/12/11
-     * descripion: 保存图片，视频，音乐到公共地区，此操作需要在子线程，不是我们自己的APP目录下面的
+     *                    date: 创建时间:2019/12/11
+     *                    descripion: 保存图片，视频，音乐到公共地区，此操作需要在子线程，不是我们自己的APP目录下面的
      **/
     private void downInPublicDir(final String downPathUrl) {
-        if(VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())){
+        if (VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())) {
             notifyError(new Exception(URL_INVALID));
             return;
         }
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                OkHttpUtil.getInstance().request(downPathUrl,method,VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
+                OkHttpUtil.getInstance().request(downPathUrl, method, VideoDownloadUtils.getTaskHeader(mTaskItem), new OkHttpUtil.RequestCallback() {
                     @Override
-                    public void onFailure( @NonNull Exception e) {
+                    public void onFailure(@NonNull Exception e) {
                         if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
                             mRetryCount++;
                             try {
@@ -1171,7 +753,7 @@ public class Android10FastFactory implements IDownloadFactory {
                     }
 
                     @Override
-                    public void onResponse( @NonNull Response response)  {
+                    public void onResponse(@NonNull Response response) {
                         if (response.code() != 200) {
 
                             if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
@@ -1209,7 +791,7 @@ public class Android10FastFactory implements IDownloadFactory {
      * 删除临时文件
      */
     private void cleanFile(File... files) {
-        if(files==null)
+        if (files == null)
             return;
         for (File file : files) {
             if (file == null) {
@@ -1218,26 +800,14 @@ public class Android10FastFactory implements IDownloadFactory {
             Path path = Paths.get(file.getAbsolutePath());
             try {
                 Files.delete(path);
-                Log.e(TAG, "asdf =====delete file suc:"+file.getAbsolutePath());
+                Log.e(TAG, "asdf =====delete file suc:" + file.getAbsolutePath());
             } catch (IOException e) {
-                Log.e(TAG, "asdf =====delete file fail:"+file.getAbsolutePath());
+                Log.e(TAG, "asdf =====delete file fail:" + file.getAbsolutePath());
                 System.out.println("文件删除失败: " + e.getMessage());
             }
         }
     }
 
-
-
-    class LocatedBuffer {
-        public byte[] buffer;
-        public long startPosition;
-        public int length;
-
-        public LocatedBuffer() {
-            startPosition = 0;
-            buffer = new byte[BUFFER_SIZE << 1];
-        }
-    }
 
     public class WriteFileThread extends Thread {
         public boolean isStart = false;
@@ -1281,13 +851,13 @@ public class Android10FastFactory implements IDownloadFactory {
                     if (childFinshCount.get() >= mTotalThreadCount) {
                         //所有分段全部下载完毕
                         notifyFinish(mFileLength, mFileLength);
-                        Log.e(TAG,"notifyFinish by thread");
+                        Log.e(TAG, "notifyFinish by thread");
                     }
                 }
                 if (isStop) {
 //                    Log.e(TAG,"thread stop");
                     try {
-                        close(bufferedOutputStream,fos,pdf,channel);
+                        close(bufferedOutputStream, fos, pdf, channel);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
