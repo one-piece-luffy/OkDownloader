@@ -1,22 +1,28 @@
 package com.baofu.okdownloaderdemo.ui;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.baofu.downloader.model.VideoTaskState;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.utils.VideoDownloadUtils;
+import com.baofu.downloader.utils.notification.NotificationBuilderManager;
 import com.baofu.okdownloaderdemo.R;
 import com.baofu.okdownloaderdemo.databinding.ActivityMainBinding;
 import com.baofu.permissionhelper.PermissionUtil;
@@ -37,8 +43,21 @@ public class MainActivity extends AppCompatActivity {
         dataBinding.download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
+                            PermissionUtil.asArray(Manifest.permission.POST_NOTIFICATIONS),
+                            (granted, isAlwaysDenied) -> {
+                                if (granted) {
+                                    startDownload();
+                                } else {
+                                    if (isAlwaysDenied) {
+                                        Toast.makeText(MainActivity.this,"权限申请失败，请设置中修改",Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(MainActivity.this,"权限申请失败",Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startDownload();
                 } else {
                     PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
@@ -57,10 +76,37 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
+
+
+
+
             }
         });
         //设置全局下载监听
         VideoDownloadManager.getInstance().setGlobalDownloadListener(mListener);
+    }
+
+
+    private void notifyTest(){
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), "download_channel");
+        builder.setContentTitle("haha") //设置标题
+                .setSmallIcon(getApplicationInfo().icon) //设置小图标
+//                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+//                            getApplicationInfo().icon)) //设置大图标
+                .setPriority(NotificationCompat.PRIORITY_MAX) //设置通知的优先级
+                .setAutoCancel(false) //设置通知被点击一次不自动取消
+                .setSound(null) //设置静音
+                .setContentText("0%") //设置内容
+                .setProgress(100, 0, false) //设置进度条
+                .setContentIntent(NotificationBuilderManager.createIntent(getApplication(), null, 1)); //设置点击事件
+        if (builder == null)
+            return;
+        int ran= (int) (Math.random()*100);
+//                builder.setContentIntent(createIntent(context, bundle,item.notificationId)); //设置点击事件
+        builder.setContentText( ran+"%");
+        builder.setProgress(100,ran, false);
+        notificationManager.notify(1, builder.build());
     }
 
     public void startDownload(){

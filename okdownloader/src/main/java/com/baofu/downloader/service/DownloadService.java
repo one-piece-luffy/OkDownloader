@@ -1,10 +1,14 @@
 package com.baofu.downloader.service;
 
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST;
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_NONE;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -47,7 +51,7 @@ public class DownloadService extends Service {
                 // Android8.0及以后的方式
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     // 创建通知渠道
-                    NotificationChannel notificationChannel = new NotificationChannel("download_channel", "下载",
+                    NotificationChannel notificationChannel = new NotificationChannel("download_channel", "download",
                             NotificationManager.IMPORTANCE_DEFAULT);
                     notificationChannel.enableLights(false); //关闭闪光灯
                     notificationChannel.enableVibration(false); //关闭震动
@@ -57,8 +61,8 @@ public class DownloadService extends Service {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), "download_channel");
                 builder.setContentTitle(item.mName) //设置标题
                         .setSmallIcon(this.getApplicationInfo().icon) //设置小图标
-//                    .setLargeIcon(BitmapFactory.decodeResource(activity.getResources(),
-//                            activity.getApplicationInfo().icon)) //设置大图标
+//                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+//                            getApplicationInfo().icon)) //设置大图标
                         .setPriority(NotificationCompat.PRIORITY_MAX) //设置通知的优先级
                         .setAutoCancel(false) //设置通知被点击一次不自动取消
                         .setSound(null) //设置静音
@@ -66,7 +70,14 @@ public class DownloadService extends Service {
                         .setProgress(100, 0, false) //设置进度条
                         .setContentIntent(NotificationBuilderManager.createIntent(getApplication(), null, item.notificationId)); //设置点击事件
                 NotificationBuilderManager.map.put(item.notificationId, builder);
-                startForeground(item.notificationId, builder.build());// 开始前台服务
+//
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(item.notificationId, builder.build(), FOREGROUND_SERVICE_TYPE_MANIFEST);
+                } else {
+                    startForeground(item.notificationId, builder.build());// 开始前台服务
+                }
+
 
             } catch (Exception x) {
                 x.printStackTrace();
