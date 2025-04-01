@@ -62,10 +62,9 @@ public class Android10FastFactory extends BaseFactory {
 
     public final String TAG = "Android10FastFactory: ";
 
-    private long[] mProgress;
 
     WriteFileThread mWriteFileThread;
-    private File[] mCacheFiles;
+
     // 存储类型，可选参数 DIRECTORY_PICTURES  ,DIRECTORY_MOVIES  ,DIRECTORY_MUSIC
     String inserType = DIRECTORY_DOWNLOADS;
     ParcelFileDescriptor pdf;
@@ -80,12 +79,7 @@ public class Android10FastFactory extends BaseFactory {
     //分段下载方式：固定阈值数
     final int RANGE_TYPE_THRESHOLD = 2;
     int mRangeType;
-    private final AtomicBoolean responseCode206 = new AtomicBoolean(true);//分段请求是否返回206
-    private final AtomicBoolean responseCode503 = new AtomicBoolean(true);
-    //中断分段下载
-    private final AtomicBoolean suspendRange = new AtomicBoolean(false);
     private final AtomicInteger childFinshCount = new AtomicInteger(0);//子线程完成数量
-    int mTotalThreadCount;
 
 
     public Android10FastFactory(VideoTaskItem taskItem, IFactoryListener listener) {
@@ -263,104 +257,6 @@ public class Android10FastFactory extends BaseFactory {
     }
 
 
-    /**
-     * 分段下载
-     *
-     * @param startIndex 开始位置
-     * @param endIndex   结束位置
-     * @param threadId   线程id
-     */
-    private void downloadByRange(final long startIndex, final long endIndex, final int threadId) throws IOException {
-        if (VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())) {
-            notifyError(new Exception(URL_INVALID));
-            return;
-        }
-        long newStartIndex = startIndex;
-        Log.e(TAG, "asdf thread" + threadId + " RANGE: " + startIndex + "-" + endIndex);
-
-        final File cacheFile = new File(VideoStorageUtils.getTempDir(VideoDownloadManager.getInstance().mConfig.context), "thread" + threadId + "_" + fileName + ".cache");
-        Log.e(TAG, "asdf fileName: " + cacheFile.getAbsolutePath());
-        mCacheFiles[threadId] = cacheFile;
-        final RandomAccessFile cacheAccessFile = new RandomAccessFile(cacheFile, "rwd");
-        if (cacheFile.exists()) {
-            try {
-                String startIndexStr = cacheAccessFile.readLine();
-                if (!TextUtils.isEmpty(startIndexStr)) {
-                    newStartIndex = Long.parseLong(startIndexStr);//重新设置下载起点
-                }
-
-
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-            //解决http 416问题
-            if (newStartIndex > endIndex) {
-                newStartIndex = startIndex;
-            }
-        }
-
-        final long finalStartIndex = newStartIndex;
-
-        Map<String, String> header = new HashMap<>();
-        if (supportBreakpoint) {
-            header.put("RANGE", "bytes=" + newStartIndex + "-" + endIndex);
-        }
-        header.put("User-Agent", VideoDownloadUtils.getUserAgent());
-//        Log.i(TAG, "range :" + startIndex + "-" + endIndex);
-//        Log.i(TAG, "thread" + threadId + "newStart:" + newStartIndex);
-        if (!TextUtils.isEmpty(eTag)) {
-            header.put("ETag", eTag);
-        }
-        Map<String, String> taskHeader = VideoDownloadUtils.getTaskHeader(mTaskItem);
-        if (taskHeader != null) {
-            header.putAll(taskHeader);
-        }
-//        for (Map.Entry<String, String> entry : header.entrySet()) {
-//            String key = entry.getKey();
-//            String value = entry.getValue();
-//            Log.e("asdf","trhead:"+threadId+", key: "+key+", value: "+value);
-//        }
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(), method, header, new OkHttpUtil.RequestCallback() {
-            @Override
-            public void onResponse(Response response) throws IOException {
-                int code = response.code();
-                if (!response.isSuccessful()) {
-                    if (code == 416) {
-                        //Range Not Satisfiable（请求范围不满足)
-                        notifyError(new Exception("code=416"));
-                        return;
-                    }
-                    // 206：请求部分资源时的成功码,断点下载的成功码
-                    retry(startIndex, endIndex, threadId, new Exception("server error not 206:" + code), DOWNLOAD_TYPE_RANGE, code);
-                    return;
-                }
-
-                if (supportBreakpoint && code != 206) {
-                    //分段请求状态码不是206，则重新发起【不分段】的请求
-                    synchronized (responseCode206) {
-                        if (responseCode206.get()) {
-                            responseCode206.set(false);
-                            mTotalThreadCount = 1;
-                            mProgress = new long[1];
-                            mCacheFiles = new File[1];
-                            downloadByAll(0, 0, 0);
-                        }
-                    }
-
-                    return;
-                }
-//                Log.i(TAG, "请求头================\n" + response.headers().toString());
-                handlerResponse(startIndex, endIndex, threadId, finalStartIndex, response, DOWNLOAD_TYPE_RANGE);
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                e.printStackTrace();
-                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_RANGE, -1);
-            }
-        });
-
-    }
 
     /**
      * 全部下载，不分段
@@ -369,42 +265,8 @@ public class Android10FastFactory extends BaseFactory {
      * @param endIndex   结束位置
      * @param threadId   线程id
      */
-    private void downloadByAll(final long startIndex, final long endIndex, final int threadId) throws IOException {
-//        Log.i(TAG, "downloadByAll start "+name);
-        if (VideoDownloadUtils.isIllegalUrl(mTaskItem.getUrl())) {
-            notifyError(new Exception(URL_INVALID));
-            return;
-        }
-        Log.i(TAG, "download all start");
-        Map<String, String> header = new HashMap<>();
-        header.put("User-Agent", VideoDownloadUtils.getUserAgent());
-        Map<String, String> taskHeader = VideoDownloadUtils.getTaskHeader(mTaskItem);
-        if (taskHeader != null) {
-            header.putAll(taskHeader);
-        }
-        OkHttpUtil.getInstance().request(mTaskItem.getUrl(), method, header, new OkHttpUtil.RequestCallback() {
-            @Override
-            public void onResponse(@NotNull Response response) {
-                int code = response.code();
-                if (!response.isSuccessful()) {
-                    // 206：请求部分资源时的成功码,断点下载的成功码
-                    retry(startIndex, endIndex, threadId, new Exception("server error:" + code), DOWNLOAD_TYPE_ALL, code);
-                    return;
-                }
-//                Log.i(TAG, "downloadByAll response "+name);
-                handlerResponse(startIndex, endIndex, threadId, startIndex, response, DOWNLOAD_TYPE_ALL);
-            }
-
-            @Override
-            public void onFailure(@NotNull Exception e) {
-                e.printStackTrace();
-                retry(startIndex, endIndex, threadId, e, DOWNLOAD_TYPE_ALL, -2);
-            }
-        });
-
-    }
-
-    private void handlerResponse(final long startIndex, final long endIndex, final int threadId, final long finalStartIndex, Response response, int downloadtype) {
+    @Override
+    void handlerResponse(final long startIndex, final long endIndex, final int threadId, final long finalStartIndex, Response response, int downloadtype) {
         if (response == null) {
             notifyError(new Exception(TAG + "handlerResponse: response is null"));
             return;
@@ -565,53 +427,6 @@ public class Android10FastFactory extends BaseFactory {
         }
     }
 
-    private void retry(final long startIndex, final long endIndex, final int threadId, Exception e, int downloadType, int errCode) {
-//        Log.i(TAG, "threadid:"+threadId+"retry type:"+ downloadType+"   \n"+e.getMessage());
-        if (cancel || pause)
-            return;
-        mRetryCount++;
-        if (errCode == HttpUtils.RESPONSE_503 || errCode == HttpUtils.RESPONSE_429 || errCode == HttpUtils.RESPONSE_509) {
-            if (mRetryCount <= MAX_RETRY_COUNT_503) {
-                //遇到503，延迟后再重试，区间间隔不能太小
-                //指数退避算法
-                long delay = (long) (INITIAL_DELAY * Math.pow(FACTOR, mRetryCount));
-                Log.e(TAG, "sleep:" + delay);
-                suspendRange.set(true);
-                try {
-                    Thread.sleep(delay);
-                    synchronized (responseCode503) {
-                        if (responseCode503.get()) {
-                            responseCode503.set(false);
-                            mTotalThreadCount = 1;
-                            mProgress = new long[1];
-                            mCacheFiles = new File[1];
-                            downloadByAll(0, 0, 0);
-                        }
-                    }
-                } catch (Exception ex) {
-                    e.printStackTrace();
-                }
-            } else {
-                resetStutus();
-                Exception ex = new Exception(TAG + "retry1: " + e.getMessage() + " code:" + errCode);
-                notifyError(ex);
-            }
-        } else if (mRetryCount < VideoDownloadManager.getInstance().mConfig.retryCount) {
-            try {
-                if (downloadType == DOWNLOAD_TYPE_RANGE) {
-                    downloadByRange(startIndex, endIndex, threadId);
-                } else {
-                    downloadByAll(startIndex, endIndex, threadId);
-                }
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        } else {
-            resetStutus();
-            Exception ex = new Exception(TAG + "retry2: " + e.getMessage() + " code:" + errCode);
-            notifyError(ex);
-        }
-    }
 
 
     private void notifyFinish(long progress, long total) {
