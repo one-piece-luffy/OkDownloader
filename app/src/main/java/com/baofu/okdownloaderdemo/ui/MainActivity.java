@@ -33,14 +33,21 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding dataBinding;
-    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-//    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
+    VideoTaskItem mVideoTaskItem;
+//    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        dataBinding.delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                VideoDownloadManager.getInstance().cancleTask(mVideoTaskItem);
+            }
+        });
         dataBinding.download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -122,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         header.put("referer",link);
         item.header= VideoDownloadUtils.mapToJsonString(header);
         item.notify=true;
-        item.privateFile=true;
+        item.privateFile=false;
 
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
@@ -202,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (!item.isDownloadSuc) {
                 item.isDownloadSuc = true;
-
+                mVideoTaskItem=item;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

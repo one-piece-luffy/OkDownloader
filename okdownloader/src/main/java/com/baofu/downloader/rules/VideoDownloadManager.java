@@ -686,39 +686,43 @@ public class VideoDownloadManager {
 
 
         File publicFile = new File(VideoDownloadManager.getInstance().mConfig.publicPath + File.separator + taskItem.mFileHash);
-        try {
             // 删除任务同时删除数据库数据
             if (mConfig.openDb) {
                 mVideoDatabaseHelper.deleteDownloadItemByUrl(taskItem);
             }
-            if (shouldDeleteSourceFile) {
+        if (shouldDeleteSourceFile) {
+            try {
                 VideoStorageUtils.delete(privateFile);
-                VideoStorageUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context,publicFile.getAbsolutePath());
-                VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
-                if(!TextUtils.isEmpty(taskItem.mM3u8FilePath)){
-                    File m3u8=new File(taskItem.mM3u8FilePath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                VideoStorageUtils.delete(publicFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
+
+            try {
+                if (!TextUtils.isEmpty(taskItem.mM3u8FilePath)) {
+                    File m3u8 = new File(taskItem.mM3u8FilePath);
                     VideoStorageUtils.delete(m3u8.getParentFile());
                 }
-                Log.e(TAG,"asdf===private:"+privateFile.getAbsolutePath());
-                Log.e(TAG,"asdf===public:"+publicFile.getAbsolutePath());
-                Log.e(TAG,"asdf===filepath:"+taskItem.getFilePath());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-            }
-            if (mVideoDownloadTaskMap.containsKey(taskItem.getUrl())) {
-                mVideoDownloadTaskMap.remove(taskItem.getUrl());
-            }
-            if (mDownloadTaskMap.containsKey(taskItem.getUrl())) {
-                mDownloadTaskMap.remove(taskItem.getUrl());
-            }
-            if (mVideoItemTaskMap.containsKey(taskItem.getUrl())) {
-                mVideoItemTaskMap.remove(taskItem.getUrl());
-            }
-//            taskItem.reset();
-//            mVideoDownloadHandler.obtainMessage(DownloadConstants.MSG_DOWNLOAD_DEFAULT, taskItem).sendToTarget();
-            Log.w(TAG, "============delete");
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            Log.e(TAG, "asdf===private:" + privateFile.getAbsolutePath());
+            Log.e(TAG, "asdf===public:" + publicFile.getAbsolutePath());
+            Log.e(TAG, "asdf===filepath:" + taskItem.getFilePath());
+
         }
+        mVideoDownloadTaskMap.remove(taskItem.getUrl());
+        mDownloadTaskMap.remove(taskItem.getUrl());
+        mVideoItemTaskMap.remove(taskItem.getUrl());
+        Log.w(TAG, "============delete");
 
     }
 

@@ -121,6 +121,7 @@ public class VideoStorageUtils {
                     try {
                         Files.delete(path);
                     } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 } else {
                     boolean result = file.delete();
@@ -131,7 +132,7 @@ public class VideoStorageUtils {
                 if (context == null)
                     return;
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-
+                    //刷新相册
                     MediaScannerConnection.scanFile(context, new String[]{filePath}
                             , new String[]{null}, new MediaScannerConnection.MediaScannerConnectionClient() {
                                 @Override
