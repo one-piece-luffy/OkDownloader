@@ -15,6 +15,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
+import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.utils.notification.NotificationBuilderManager;
@@ -50,15 +51,18 @@ public class DownloadService extends Service {
                 NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 // Android8.0及以后的方式
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    // 创建通知渠道
-                    NotificationChannel notificationChannel = new NotificationChannel("download_channel", "download",
-                            NotificationManager.IMPORTANCE_DEFAULT);
-                    notificationChannel.enableLights(false); //关闭闪光灯
-                    notificationChannel.enableVibration(false); //关闭震动
-                    notificationChannel.setSound(null, null); //设置静音
-                    notificationManager.createNotificationChannel(notificationChannel);
+                    NotificationChannel mNotificationChannel = notificationManager.getNotificationChannel(VideoDownloadConstants.CHANNEL_ID);
+                    if (mNotificationChannel == null) {
+                        // 创建通知渠道
+                        NotificationChannel notificationChannel = new NotificationChannel(VideoDownloadConstants.CHANNEL_ID, "download",
+                                NotificationManager.IMPORTANCE_DEFAULT);
+                        notificationChannel.enableLights(false); //关闭闪光灯
+                        notificationChannel.enableVibration(false); //关闭震动
+                        notificationChannel.setSound(null, null); //设置静音
+                        notificationManager.createNotificationChannel(notificationChannel);
+                    }
                 }
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), "download_channel");
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), VideoDownloadConstants.CHANNEL_ID);
                 builder.setContentTitle(item.mName) //设置标题
                         .setSmallIcon(this.getApplicationInfo().icon) //设置小图标
 //                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),

@@ -1,6 +1,7 @@
 package com.baofu.okdownloaderdemo.ui;
 
 import android.Manifest;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.model.VideoTaskState;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
@@ -34,8 +36,8 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding dataBinding;
     VideoTaskItem mVideoTaskItem;
-//    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
+    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+//    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +99,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void notifyTest(){
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), "download_channel");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel mNotificationChannel = notificationManager.getNotificationChannel(VideoDownloadConstants.CHANNEL_ID);
+            if (mNotificationChannel == null) {
+                // 创建通知渠道
+                NotificationChannel notificationChannel = new NotificationChannel(VideoDownloadConstants.CHANNEL_ID, "download",
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                notificationChannel.enableLights(false); //关闭闪光灯
+                notificationChannel.enableVibration(false); //关闭震动
+                notificationChannel.setSound(null, null); //设置静音
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), VideoDownloadConstants.CHANNEL_ID);
         builder.setContentTitle("haha") //设置标题
                 .setSmallIcon(getApplicationInfo().icon) //设置小图标
 //                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),

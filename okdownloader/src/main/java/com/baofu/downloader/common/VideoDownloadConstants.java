@@ -31,4 +31,6 @@ public class VideoDownloadConstants {
 
     //遇到503的重试次数
     public final static int MAX_RETRY_COUNT_503 = 4;
+
+    public final static String CHANNEL_ID="download_channel";
 }
