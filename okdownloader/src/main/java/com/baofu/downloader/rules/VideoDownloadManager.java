@@ -140,7 +140,6 @@ public class VideoDownloadManager {
                 Intent intent = new Intent(context, DownloadService.class);
                 taskItem.putExtra(intent);
                 context.startService(intent);
-                Log.e("asdf","download by service");
             } else {
                 Data inputData = taskItem.putWorkerData();
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DownloadWorker.class)
@@ -149,7 +148,6 @@ public class VideoDownloadManager {
                         .build();
                 // 将工作请求提交给 WorkManager
                 WorkManager.getInstance(context).enqueue(workRequest);
-                Log.e("asdf","download by workmanager");
             }
         } else {
             startDownload2(taskItem);
