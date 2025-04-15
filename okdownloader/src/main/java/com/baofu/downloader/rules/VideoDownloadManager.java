@@ -10,6 +10,10 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
 import com.baofu.downloader.VideoDownloadQueue;
 import com.baofu.downloader.VideoInfoParserManager;
 import com.baofu.downloader.common.VideoDownloadConstants;
@@ -32,6 +36,7 @@ import com.baofu.downloader.task.VideoDownloadTask;
 import com.baofu.downloader.utils.ContextUtils;
 import com.baofu.downloader.utils.DownloadExceptionUtils;
 import com.baofu.downloader.utils.DownloadExecutor;
+import com.baofu.downloader.utils.DownloadWorker;
 import com.baofu.downloader.utils.LogUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.UniqueIdGenerator;
@@ -50,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Response;
 
@@ -130,9 +136,21 @@ public class VideoDownloadManager {
             if (taskItem.notificationId <= 0) {
                 taskItem.notificationId = UniqueIdGenerator.generateUniqueId();
             }
-            Intent intent = new Intent(context, DownloadService.class);
-            taskItem.putExtra(intent);
-            context.startService(intent);
+            if (mConfig != null && !mConfig.useWorker) {
+                Intent intent = new Intent(context, DownloadService.class);
+                taskItem.putExtra(intent);
+                context.startService(intent);
+                Log.e("asdf","download by service");
+            } else {
+                Data inputData = taskItem.putWorkerData();
+                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DownloadWorker.class)
+//                    .setInitialDelay(0, TimeUnit.MILLISECONDS)  // 立即执行，延迟0毫秒执行
+                        .setInputData(inputData)
+                        .build();
+                // 将工作请求提交给 WorkManager
+                WorkManager.getInstance(context).enqueue(workRequest);
+                Log.e("asdf","download by workmanager");
+            }
         } else {
             startDownload2(taskItem);
         }

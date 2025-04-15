@@ -50,6 +50,11 @@ dependencies {
     // 数据库
     implementation "androidx.room:room-runtime:2.6.1"
     kapt "androidx.room:room-compiler:2.6.1"
+    //WorkManager
+    implementation 'androidx.work:work-runtime:2.10.0'
+
+
+
 //    annotationProcessor "androidx.room:room-compiler2.6.1"
 
 //    implementation 'com.google.code.gson:gson:2.10.1'

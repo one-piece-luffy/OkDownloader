@@ -31,6 +31,8 @@ public class VideoDownloadConfig {
     public boolean mergeM3u8;
     //下载失败重试次数
     public int retryCount = 1;
+    //true:使用workmanager下载，false:使用service下载
+    public boolean useWorker=true;
 
 
     public int getReadTimeOut(){
@@ -131,6 +133,10 @@ public class VideoDownloadConfig {
 
         public Builder mergeM3u8(boolean mergeM3u8) {
             mConfig.mergeM3u8 = mergeM3u8;
+            return this;
+        }
+        public Builder useWorker(boolean useWorker) {
+            mConfig.useWorker = useWorker;
             return this;
         }
         public Builder saveAsPublic(boolean saveAsPublic) {

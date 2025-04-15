@@ -9,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
+import androidx.work.Data;
+
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 import java.util.Map;
@@ -486,6 +488,56 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.notificationId=intent.getIntExtra("notificationId",0);
         item.sort=intent.getIntExtra("sort",0);
         String headerJson=intent.getStringExtra("header");
+        item.header=headerJson;
+        return item;
+    }
+
+
+
+    public Data putWorkerData(){
+        return  new Data.Builder()
+                .putString("url", mUrl)
+                .putString("cover", mCoverUrl)
+                .putString("title", mName)
+                .putString("sourceUrl", sourceUrl)
+                .putString("quality", quality)
+                .putString("suffix", suffix)
+                .putLong("estimateSize", estimateSize)
+                .putString("filename", getFileName())
+                .putBoolean("overwrite", overwrite)
+                .putString("method", method)
+                .putBoolean("privateFile", privateFile)
+                .putInt("sort", sort)
+                .putString("downloadGroup", downloadGroup)
+                .putInt("notificationId", notificationId)
+                .putString("groupId", groupId)
+                .putString("header", header)
+                .build();
+
+    }
+    public static VideoTaskItem getItemByWorkerData(Data workData){
+        if(workData==null){
+            return null;
+        }
+        VideoTaskItem item = new VideoTaskItem(
+                workData.getString("url"),
+                workData.getString("cover"),
+                workData.getString("title"),
+                workData.getString("sourceUrl"),
+                workData.getString("quality"),
+                null
+        );
+        item.suffix=workData.getString("suffix");
+        item.estimateSize=workData.getLong("estimateSize",0);
+        item.setFileName(workData.getString("filename"));
+        item.overwrite=workData.getBoolean("overwrite",false);
+        item.method=workData.getString("method");
+        item.downloadGroup=workData.getString("downloadGroup");
+        item.privateFile=workData.getBoolean("privateFile",false);
+        item.groupId=workData.getString("groupId");
+        item.notificationId=workData.getInt("notificationId",0);
+        item.sort=workData.getInt("sort",0);
+        String headerJson=workData.getString("header");
         item.header=headerJson;
         return item;
     }

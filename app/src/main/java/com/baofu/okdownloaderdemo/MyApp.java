@@ -44,6 +44,7 @@ public class MyApp extends Application {
                     .decryptM3u8(true)
                     .mergeM3u8(false)
                     .saveAsPublic(true)//保存在共有目录
+                    .useWorker(true)
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
         } catch (Exception e) {

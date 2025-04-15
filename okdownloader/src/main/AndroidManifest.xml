@@ -6,14 +6,21 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- 添加前台服务权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<!--    要加这个才能启动前台服务，但是加这个谷歌审核需要提供为什么需要前台服务的视频链接，所以先去掉，在集成库的app里看需要在自己添加-->
+<!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />-->
 
     <uses-permission android:name="android.permission.INTERNET" />
     <application android:usesCleartextTraffic="true">
         <service
             android:name=".service.DownloadService"
-            android:foregroundServiceType="location"
             android:enabled="true"
             android:exported="false" />
+<!--        <service-->
+<!--            android:name=".service.DownloadService"-->
+<!--            android:foregroundServiceType="location"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="false" />-->
+
     </application>
 
 </manifest>
