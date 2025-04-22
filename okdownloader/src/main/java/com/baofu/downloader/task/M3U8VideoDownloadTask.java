@@ -142,7 +142,6 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 //                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), Executors.defaultThreadFactory(),
 //                new ThreadPoolExecutor.DiscardOldestPolicy());
         //任务过多后，存储任务的一个阻塞队列
-        Log.e(TAG, "COUNT:" + THREAD_COUNT);
         mDownloadExecutor = Executors.newFixedThreadPool(THREAD_COUNT);
         isRunning.set(true);
         new Thread() {
@@ -240,7 +239,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         int activeCount = tpe.getActiveCount();
                         long completedTaskCount = tpe.getCompletedTaskCount();
                         long taskCount = tpe.getTaskCount();
-                        Log.i(TAG, "当前排队线程数：" + queueSize + " 当前活动线程数：" + activeCount + " 执行完成线程数：" + completedTaskCount + " 总线程数：" + taskCount);
+                        Log.i(TAG, mTaskItem.mName+" 当前排队线程数：" + queueSize + " 当前活动线程数：" + activeCount + " 执行完成线程数：" + completedTaskCount + " 总线程数：" + taskCount);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -606,7 +605,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             mPercent = percent;
             mLastCachedSize = mCurrentDownloaddSize.get();
             mLastInvokeTime = nowTime;
-            Log.i(TAG, "m3u8  cur:" + mCurTs + " error count:" + mErrorTsCont + " mTotalTs:" + mTotalTs);
+            Log.i(TAG, mTaskItem.mName+" m3u8  cur:" + mCurTs + " error count:" + mErrorTsCont + " mTotalTs:" + mTotalTs);
         }
     }
 
@@ -761,7 +760,6 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                Log.e(TAG, "sleep:" + ran);
                 downloadFile(ts, file, videoUrl);
             }
         } else if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {

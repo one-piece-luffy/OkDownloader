@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.baofu.downloader.listener.IFactoryListener;
+import com.baofu.downloader.m3u8.M3U8Utils;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.DownloadExecutor;
@@ -107,6 +108,7 @@ public abstract class BaseFactory implements IDownloadFactory {
 //            String fileName = getFileName(response);
 //            Log.i(TAG, "获取到文件名：" + fileName);
 
+
                 // 获取分块传输标志
                 String transferEncoding = response.header("Transfer-Encoding");
                 chunked = "chunked".equals(transferEncoding);
@@ -140,12 +142,25 @@ public abstract class BaseFactory implements IDownloadFactory {
 //            Log.i(TAG, "content-type：" + contentType);
                 if (contentType != null) {
                     mTaskItem.contentType = contentType;
-                    for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
-                        if (entry.getKey().contains(contentType)) {
-                            mTaskItem.suffix = entry.getValue();
-                            break;
+                    if(MimeType.STREAM.equals(contentType)){
+                        String filename = M3U8Utils.getFileName(response, url);
+                        if (filename != null) {
+                            int index = filename.lastIndexOf(".");
+                            if (index >= 0) {
+                                mTaskItem.suffix = filename.substring(index);
+                            }
+
+                        }
+
+                    } else {
+                        for (Map.Entry<String, String> entry : MimeType.map.entrySet()) {
+                            if (entry.getKey().contains(contentType)) {
+                                mTaskItem.suffix = entry.getValue();
+                                break;
+                            }
                         }
                     }
+
                 }
                 mTaskItem.setTotalSize(mFileLength);
                 fileName = VideoDownloadUtils.getFileName(mTaskItem, null, true);

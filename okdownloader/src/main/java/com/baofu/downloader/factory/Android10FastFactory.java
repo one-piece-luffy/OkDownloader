@@ -97,19 +97,19 @@ public class Android10FastFactory extends BaseFactory {
     @Override
     void handlerData(Response response) {
         try {
-            String mimeType = mTaskItem.contentType;
-            if (TextUtils.isEmpty(mimeType) && !TextUtils.isEmpty(mTaskItem.suffix)) {
-                mimeType = mTaskItem.suffix.replace(".", "");
-            } else if (!TextUtils.isEmpty(mimeType) && TextUtils.isEmpty(mTaskItem.suffix)) {
-                //MimeType 没有匹配到后缀，如果不置空mimeType,公有目录会默认添加后缀，导致文件路径和数据库存储的不一致
-                mimeType = null;
+            String contentType = mTaskItem.contentType;
+            if (TextUtils.isEmpty(contentType) && !TextUtils.isEmpty(mTaskItem.suffix)) {
+                contentType = mTaskItem.suffix.replace(".", "");
+            } else if (!TextUtils.isEmpty(contentType) && TextUtils.isEmpty(mTaskItem.suffix)) {
+                //contentType 没有匹配到后缀，如果不置空contentType,公有目录会默认添加后缀，导致文件路径和数据库存储的不一致
+                contentType = null;
             }
-            Uri uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, mimeType);
+            Uri uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, contentType);
             if (uri == null) {
                 //创建失败，则重命名，重新创建
                 Log.e(TAG, "==================重命名");
                 fileName = VideoDownloadUtils.getFileName(mTaskItem, System.currentTimeMillis() + "", true);
-                uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, mimeType);
+                uri = VideoDownloadUtils.getUri(DIRECTORY_DOWNLOADS, fileName, contentType);
             }
             //重建后还是没有uri，提示失败
             if (uri == null) {

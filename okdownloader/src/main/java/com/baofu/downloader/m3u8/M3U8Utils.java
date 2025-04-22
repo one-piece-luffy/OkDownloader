@@ -643,9 +643,13 @@ public class M3U8Utils {
                         p2 = contentDisposition.indexOf("=", p1);
                         if (p2 >= 0) {
                             name = contentDisposition.substring(p2 + 1);
+                            if(name.startsWith("\"")&&name.endsWith("\"")){
+                                name=name.substring(1,name.length()-1);
+                            }
                         }
                     }
                 }
+
 
                 name = URLDecoder.decode(name, charset);
             } catch (Exception e) {

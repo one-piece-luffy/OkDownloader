@@ -54,10 +54,11 @@ public class NotificationBuilderManager {
                 } else {
                     builder.setContentText(item.message);
                 }
-                if (item.getTaskState() == VideoTaskState.SUCCESS) {
-                    //取消进度条
-                    builder.setProgress(0, 0, false);
-                }
+//                if (item.getTaskState() == VideoTaskState.SUCCESS) {
+//                    //取消进度条
+//                    builder.setProgress(0, 0, false);
+//                }
+                builder.setProgress(0, 0, false);
                 builder.setAutoCancel(true);
             }
             if(item.getTaskState()== VideoTaskState.ERROR){

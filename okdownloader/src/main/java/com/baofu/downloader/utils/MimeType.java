@@ -3,20 +3,19 @@ package com.baofu.downloader.utils;
 import java.util.HashMap;
 
 public class MimeType {
+    public static final String STREAM="application/octet-stream";
     public static HashMap<String, String> map = new HashMap<String, String>() {
         {
             put("video/3gpp", ".3gp");
             put("application/vnd.android.package-archive", ".apk");
             put("video/x-ms-asf", ".asf");
             put("video/x-msvideo", ".avi");
-            put("application/octet-stream", ".bin");
+//            put(STREAM, ".bin");
             put("image/bmp", ".bmp");
-//            put(".class", "application/octet-stream");
             put("application/msword", ".doc");
             put("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx");
             put("application/vnd.ms-excel", ".xls");
             put("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
-//            put(".exe", "application/octet-stream");
             put("image/gif", ".gif");
             put("application/x-gtar", ".gtar");
             put("application/x-gzip", ".gz");
