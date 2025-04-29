@@ -10,7 +10,9 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
@@ -142,9 +144,16 @@ public class VideoDownloadManager {
                 context.startService(intent);
             } else {
                 Data inputData = taskItem.putWorkerData();
+
+                // 创建联网约束
+                Constraints constraints = new Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.UNMETERED) // 要求设备链接wifi
+                        .build();
+
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DownloadWorker.class)
 //                    .setInitialDelay(0, TimeUnit.MILLISECONDS)  // 立即执行，延迟0毫秒执行
                         .setInputData(inputData)
+                        .setConstraints(constraints)
                         .build();
                 // 将工作请求提交给 WorkManager
                 WorkManager.getInstance(context).enqueue(workRequest);
