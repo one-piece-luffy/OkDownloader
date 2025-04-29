@@ -515,6 +515,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
                 .putInt("notificationId", notificationId)
                 .putString("groupId", groupId)
                 .putString("header", header)
+                .putBoolean("onlyWify", onlyWifi)
                 .build();
 
     }
@@ -537,6 +538,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.method=workData.getString("method");
         item.downloadGroup=workData.getString("downloadGroup");
         item.privateFile=workData.getBoolean("privateFile",false);
+        item.onlyWifi=workData.getBoolean("onlyWify",false);
         item.groupId=workData.getString("groupId");
         item.notificationId=workData.getInt("notificationId",0);
         item.sort=workData.getInt("sort",0);
