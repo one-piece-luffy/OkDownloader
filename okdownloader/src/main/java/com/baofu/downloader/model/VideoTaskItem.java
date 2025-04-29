@@ -97,6 +97,9 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     @Ignore
     public boolean notify = true;
     public long createTime;
+    //只在wifi下下载
+    @Ignore
+    public boolean onlyWifi;
 
 
     public static class Columns {

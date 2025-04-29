@@ -144,11 +144,19 @@ public class VideoDownloadManager {
                 context.startService(intent);
             } else {
                 Data inputData = taskItem.putWorkerData();
+                Constraints constraints=null;
 
                 // 创建联网约束
-                Constraints constraints = new Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.UNMETERED) // 要求设备链接wifi
-                        .build();
+                if (taskItem.onlyWifi) {
+                    constraints = new Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.UNMETERED) // 要求设备链接wifi
+                            .build();
+                } else {
+                    constraints = new Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED) // 要求设备联网
+                            .build();
+                }
+
 
                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DownloadWorker.class)
 //                    .setInitialDelay(0, TimeUnit.MILLISECONDS)  // 立即执行，延迟0毫秒执行
