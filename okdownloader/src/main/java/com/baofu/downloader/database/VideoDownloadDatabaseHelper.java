@@ -3,6 +3,7 @@ package com.baofu.downloader.database;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import androidx.sqlite.db.SimpleSQLiteQuery;
 import androidx.sqlite.db.SupportSQLiteQuery;
@@ -58,6 +59,7 @@ public class VideoDownloadDatabaseHelper {
     }
 
     private void insertVideoDownloadInfo( VideoTaskItem item) {
+        Log.e("asdf","insert"+" "+item.mName);
         OkDownloaderDatabase.getInstance().videoTaskItemDao().insert(item);
     }
 
@@ -106,6 +108,7 @@ public class VideoDownloadDatabaseHelper {
     }
 
     public void deleteDownloadItemByUrl(VideoTaskItem item) {
+        Log.e("asdf","delete"+" "+item.mName);
         OkDownloaderDatabase.getInstance().videoTaskItemDao().deleteByUrl(item.mUrl);
     }
 

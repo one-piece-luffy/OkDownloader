@@ -719,10 +719,10 @@ public class VideoDownloadManager {
 
 
         File publicFile = new File(VideoDownloadManager.getInstance().mConfig.publicPath + File.separator + taskItem.mFileHash);
-            // 删除任务同时删除数据库数据
-            if (mConfig.openDb) {
-                mVideoDatabaseHelper.deleteDownloadItemByUrl(taskItem);
-            }
+        // 删除任务同时删除数据库数据
+        if (mConfig.openDb) {
+            mVideoDatabaseHelper.deleteDownloadItemByUrl(taskItem);
+        }
         if (shouldDeleteSourceFile) {
             try {
                 VideoStorageUtils.delete(privateFile);
