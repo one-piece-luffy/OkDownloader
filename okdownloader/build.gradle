@@ -34,17 +34,22 @@ android {
         jvmTarget = "1.8"
     }
 
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
 
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 //    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
-    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
+//    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
 //    api "androidx.work:work-runtime:2.8.1"
 
     // 数据库
