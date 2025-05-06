@@ -384,41 +384,59 @@ public class VideoDownloadManager {
     }
 
     private void startM3U8VideoDownloadTask(final VideoTaskItem taskItem, M3U8 m3u8) {
-        taskItem.setTaskState(VideoTaskState.PREPARE);
-        mVideoItemTaskMap.put(taskItem.getUrl(), taskItem);
-        VideoTaskItem tempTaskItem = (VideoTaskItem) taskItem.clone();
-        mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_PREPARE, tempTaskItem).sendToTarget();
+
+        if ( mVideoDownloadQueue.contains(taskItem)) {
+            taskItem.setTaskState(VideoTaskState.PREPARE);
+            mVideoItemTaskMap.put(taskItem.getUrl(), taskItem);
+            VideoTaskItem tempTaskItem = (VideoTaskItem) taskItem.clone();
+            mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_PREPARE, tempTaskItem).sendToTarget();
 //        synchronized (mQueueLock) {
 //            if (mVideoDownloadQueue.getDownloadingCount() >= mConfig.getConcurrentCount()) {
 //                return;
 //            }
 //        }
-        VideoDownloadTask downloadTask = mVideoDownloadTaskMap.get(taskItem.getUrl());
-        if (downloadTask != null) {
-            downloadTask.cancle();
+            VideoDownloadTask downloadTask = mVideoDownloadTaskMap.get(taskItem.getUrl());
+            if (downloadTask != null) {
+                downloadTask.cancle();
+            }
+
+            downloadTask = new M3U8VideoDownloadTask(taskItem, m3u8);
+            mVideoDownloadTaskMap.put(taskItem.getUrl(), downloadTask);
+            startDownloadTask(downloadTask, taskItem);
+
+        } else {
+            //批量删除任务的时候，可能网络请求还没返回，任务还没开始下载就被删除了，那就不继续下载了
         }
-        downloadTask = new M3U8VideoDownloadTask(taskItem, m3u8);
-        mVideoDownloadTaskMap.put(taskItem.getUrl(), downloadTask);
-        startDownloadTask(downloadTask, taskItem);
+
+
     }
 
     private void startBaseVideoDownloadTask(VideoTaskItem taskItem) {
-        taskItem.setTaskState(VideoTaskState.PREPARE);
-        mVideoItemTaskMap.put(taskItem.getUrl(), taskItem);
-        VideoTaskItem tempTaskItem = (VideoTaskItem) taskItem.clone();
-        mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_PREPARE, tempTaskItem).sendToTarget();
+
+
+        if (mVideoDownloadQueue.contains(taskItem)) {
+            taskItem.setTaskState(VideoTaskState.PREPARE);
+            mVideoItemTaskMap.put(taskItem.getUrl(), taskItem);
+            VideoTaskItem tempTaskItem = (VideoTaskItem) taskItem.clone();
+            mVideoDownloadHandler.obtainMessage(VideoDownloadConstants.MSG_DOWNLOAD_PREPARE, tempTaskItem).sendToTarget();
 //        synchronized (mQueueLock) {
 //            if (mVideoDownloadQueue.getRunningCount() >= mConfig.getConcurrentCount()) {
 //                return;
 //            }
 //        }
-        VideoDownloadTask downloadTask = mVideoDownloadTaskMap.get(taskItem.getUrl());
-        if (downloadTask != null) {
-            downloadTask.cancle();
+            VideoDownloadTask downloadTask = mVideoDownloadTaskMap.get(taskItem.getUrl());
+            if (downloadTask != null) {
+                downloadTask.cancle();
+            }
+            downloadTask = new AllDownloadTask(taskItem);
+            mVideoDownloadTaskMap.put(taskItem.getUrl(), downloadTask);
+            startDownloadTask(downloadTask, taskItem);
+
+        } else {
+            //todo
+            //批量删除任务的时候，可能网络请求还没返回，任务还没开始下载就被删除了，那就不继续下载了
         }
-        downloadTask = new AllDownloadTask(taskItem);
-        mVideoDownloadTaskMap.put(taskItem.getUrl(), downloadTask);
-        startDownloadTask(downloadTask, taskItem);
+
     }
 
     private void startDownloadTask(VideoDownloadTask downloadTask, VideoTaskItem taskItem) {
