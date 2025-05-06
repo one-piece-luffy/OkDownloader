@@ -43,7 +43,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.aar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
@@ -51,6 +51,9 @@ dependencies {
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
 //    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
 //    api "androidx.work:work-runtime:2.8.1"
+    implementation files('libs/classes.jar')
+
+
 
     // 数据库
     implementation "androidx.room:room-runtime:2.6.1"
