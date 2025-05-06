@@ -16,3 +16,4 @@ local.properties
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 /.kotlin
+.idea/deploymentTargetSelector.xml
