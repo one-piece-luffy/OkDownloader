@@ -34,11 +34,11 @@ android {
         jvmTarget = "1.8"
     }
 
-    repositories {
-        flatDir {
-            dirs 'libs'
-        }
-    }
+//    repositories {
+//        flatDir {
+//            dirs 'libs'
+//        }
+//    }
 //    sourceSets {
 //        main {
 //            jniLibs.srcDirs = ['libs']
@@ -56,7 +56,7 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation 'com.arthenica:smart-exception-java:0.2.1'
+
 //    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
 //    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
@@ -65,10 +65,10 @@ dependencies {
 
 //    implementation files('libs/ffmpeg-kit-6.0.2.jar')
 
-    fileTree(dir: 'libs', include: ['*.aar'])
-    implementation files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
+//    fileTree(dir: 'libs', include: ['*.aar'])
+//    implementation files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
 
-
+    api project(':ffmpeg-kit') // 间接依赖 AAR
 
 
 
