@@ -1,0 +1,25 @@
+
+apply plugin: "maven-publish"
+android {
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'com.github.one-piece-luffy' //groupId 随便取，jitpack不会使用
+                artifactId = PROJ_ARTIFACTID  //test随便取,jitpack不会使用
+                version = '2.1.31' //随便取，jitpack不会使用
+
+            }
+        }
+    }
+}
