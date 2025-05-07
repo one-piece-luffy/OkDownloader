@@ -1,6 +1,5 @@
-plugins {
-    id 'com.android.library'
-}
+apply plugin: 'com.android.library'
+apply from: "$rootDir/gradle/publish.gradle"
 
 android {
     namespace 'com.baofu.ffmpeg_kit'
@@ -11,6 +10,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
+
     }
 
     buildTypes {
@@ -20,21 +20,29 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     repositories {
         flatDir {
             dirs 'libs'
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs'] // 指定 .so 文件路径
+        }
+    }
+
 }
 
 dependencies {
-
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
-        fileTree(dir: 'libs', include: ['*.aar'])
-    api files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
     api 'com.arthenica:smart-exception-java:0.2.1'
+
+//    fileTree(dir: 'libs', include: ['*.aar'])
+//    api files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
+
+    api fileTree(dir: 'libs', include: ['*.jar'])
+    api files('libs/ffmpeg-kit-6.0.2.jar')
+
 }
