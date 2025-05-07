@@ -1,20 +1,10 @@
 package com.baofu.downloader.utils;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-
 import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import com.arthenica.ffmpegkit.FFmpegSession;
 import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback;
-import com.arthenica.ffmpegkit.FFprobeSession;
-import com.arthenica.ffmpegkit.FFprobeSessionCompleteCallback;
-import com.arthenica.ffmpegkit.LogCallback;
 import com.arthenica.ffmpegkit.ReturnCode;
 import com.arthenica.ffmpegkit.SessionState;
-import com.arthenica.ffmpegkit.Statistics;
-import com.arthenica.ffmpegkit.StatisticsCallback;
 import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.m3u8.M3U8Seg;

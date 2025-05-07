@@ -39,19 +39,39 @@ android {
             dirs 'libs'
         }
     }
+//    sourceSets {
+//        main {
+//            jniLibs.srcDirs = ['libs']
+//        }
+//    }
+//    sourceSets {
+//        main {
+//            jniLibs.srcDirs = ['libs'] // 指定 .so 文件路径
+//        }
+//    }
 
 }
-
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation 'com.arthenica:smart-exception-java:0.2.1'
 //    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
 //    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
 //    api "androidx.work:work-runtime:2.8.1"
-    implementation files('libs/classes.jar')
+
+
+//    implementation files('libs/ffmpeg-kit-6.0.2.jar')
+
+    fileTree(dir: 'libs', include: ['*.aar'])
+    implementation files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
+
+
+
+
+
 
 
 
@@ -69,6 +89,7 @@ dependencies {
 //    implementation 'com.alibaba:fastjson:1.1.70.android'
 
 }
+
 
 
 

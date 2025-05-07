@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -19,10 +21,12 @@ import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.baofu.downloader.common.VideoDownloadConstants;
+import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.model.VideoTaskState;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.model.VideoTaskItem;
+import com.baofu.downloader.utils.FFmpegUtils;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 import com.baofu.downloader.utils.notification.NotificationBuilderManager;
 import com.baofu.okdownloaderdemo.R;
@@ -34,10 +38,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
+    Handler handler=new Handler(Looper.getMainLooper());
     ActivityMainBinding dataBinding;
     VideoTaskItem mVideoTaskItem;
-    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-//    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
+//    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -91,6 +96,54 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+            }
+        });
+
+        dataBinding.export.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String m3u8Path=null;
+                String name="";
+                if (mVideoTaskItem == null) {
+                    m3u8Path = "/storage/emulated/0/Android/data/app.demo.okdownloader/files/Download/bp/图片1746596901543/图片1746596901543.m3u8";
+                    name="图片1746596901543";
+                } else {
+                    m3u8Path = mVideoTaskItem.getFilePath();
+                    name=mVideoTaskItem.mName;
+                }
+                Log.e("asdf","filepath:"+m3u8Path);
+                String mp4Path= VideoDownloadManager.getInstance().mConfig.publicPath + File.separator +name + ".mp4";
+                FFmpegUtils.covertM3u8ToMp4(m3u8Path, mp4Path, new IFFmpegCallback() {
+                    @Override
+                    public void onSuc() {
+                        if (isFinishing() || isDestroyed()) {
+                            return;
+                        }
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"导出成功",Toast.LENGTH_SHORT).show();
+                                //刷新相册
+                                VideoDownloadUtils.scanAlbum(MainActivity.this,mp4Path);
+
+                            }
+                        });
+
+                    }
+
+                    @Override
+                    public void onFail() {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this,"导出失败",Toast.LENGTH_SHORT).show();
+
+                            }
+                        });
+
+                    }
+                });
             }
         });
         //设置全局下载监听
@@ -229,6 +282,8 @@ public class MainActivity extends AppCompatActivity {
             if (!item.isDownloadSuc) {
                 item.isDownloadSuc = true;
                 mVideoTaskItem=item;
+                String m3u8Path=mVideoTaskItem.getFilePath();
+                Log.e("asdf","filepath:"+m3u8Path);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
