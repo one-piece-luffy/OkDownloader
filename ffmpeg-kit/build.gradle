@@ -28,6 +28,7 @@ android {
             dirs 'libs'
         }
     }
+    //如果是引入aar的话就可以注释下面这段，引入jar就需要导入so
     sourceSets {
         main {
             jniLibs.srcDirs = ['src/main/jniLibs'] // 指定 .so 文件路径
@@ -40,7 +41,7 @@ dependencies {
     api 'com.arthenica:smart-exception-java:0.2.1'
 
 //    fileTree(dir: 'libs', include: ['*.aar'])
-//    api files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
+//    api files('libs/ffmpeg-kit-full-6.0-2.aar')
 
     api fileTree(dir: 'libs', include: ['*.jar'])
     api files('libs/ffmpeg-kit-6.0.2.jar')
