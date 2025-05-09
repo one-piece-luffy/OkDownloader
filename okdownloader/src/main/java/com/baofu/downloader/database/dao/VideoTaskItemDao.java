@@ -40,5 +40,5 @@ public interface VideoTaskItemDao {
     List<VideoTaskItem> getDownloadingItem();
 
     @Query("select * from VideoTaskItem WHERE mUrl=:url")
-    public VideoTaskItem getItemByUrl(String url);
+    VideoTaskItem getItemByUrl(String url);
 }

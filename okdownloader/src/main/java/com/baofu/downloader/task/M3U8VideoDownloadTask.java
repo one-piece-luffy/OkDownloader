@@ -152,6 +152,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     if (tempTsFile.exists()) {
                         if (tempTsFile.length() > 0) {
                             ts.setTsSize(tempTsFile.length());
+                            ts.setContentLength(tempTsFile.length());
                             ts.success = true;
                             mCurrentDownloaddSize.getAndAdd(ts.getTsSize());
 
@@ -167,7 +168,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 for (int index = 0; index < mTotalTs; index++) {
                     final M3U8Seg ts = mTsList.get(index);
                     if (ts.success || ts.failed) {
-                        mCurTs.incrementAndGet(); // 原子操作
+                        mCurTs.incrementAndGet();
                         continue;
                     }
                     try {
@@ -175,7 +176,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             if (ts.hasInitSegment()) {
                                 String tsInitSegmentName = ts.getInitSegmentName();
                                 File tsInitSegmentFile = new File(mSaveDir, tsInitSegmentName);
-                                if (!tsInitSegmentFile.exists()) {
+                                if (!tsInitSegmentFile.exists() || tsInitSegmentFile.length() == 0) {
                                     Log.e(TAG, "===================出大事了===============");
                                     Log.e(TAG, "===================出大事了===============");
                                     Log.e(TAG, "===================出大事了===============");
@@ -183,7 +184,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                                 }
                             }
                             File tsFile = new File(mSaveDir, ts.getIndexName());
-                            if (!tsFile.exists()) {
+                            if (!tsFile.exists() || tsFile.length() == 0) {
                                 // ts is network resource, download ts file then rename it to local file.
                                 downloadFile(ts, tsFile, ts.getUrl());
                             }
@@ -717,10 +718,16 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 if (contentLength <= 0) {
                     contentLength = file.length();
                 }
-                ts.setContentLength(contentLength);
-                mCurrentDownloaddSize.getAndAdd(contentLength);
-                mCurTs.incrementAndGet();
-                ts.success = true;
+                if (contentLength == 0) {
+                    onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length = 0 or code=" + responseCode));
+                } else {
+                    ts.setContentLength(contentLength);
+                    ts.setTsSize(contentLength);
+                    mCurrentDownloaddSize.getAndAdd(contentLength);
+                    mCurTs.incrementAndGet();
+                    ts.success = true;
+                }
+
             } else {
                 onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("response is null or code=" + responseCode));
             }
@@ -884,7 +891,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             bfw.write(M3U8Constants.TAG_TARGET_DURATION + ":" + mM3U8.getTargetDuration() + "\n");
 
             for (M3U8Seg m3u8Ts : mTsList) {
-                if (m3u8Ts.failed) {
+                if (m3u8Ts.failed || m3u8Ts.getTsSize() == 0) {
                     continue;
                 }
                 if (m3u8Ts.hasInitSegment()) {
@@ -902,7 +909,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         String key = "METHOD=" + m3u8Ts.getMethod();
                         if (m3u8Ts.getKeyUri() != null) {
                             File keyFile = new File(mSaveDir, m3u8Ts.getLocalKeyUri());
-                            if (!m3u8Ts.isMessyKey() && keyFile.exists()) {
+                            if (!m3u8Ts.isMessyKey() && keyFile.exists() && keyFile.length() > 0) {
                                 key += ",URI=\"" + keyFile.getAbsolutePath() + "\"";
                             } else {
                                 key += ",URI=\"" + m3u8Ts.getKeyUri() + "\"";

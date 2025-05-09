@@ -74,6 +74,9 @@ public class VideoDownloadDatabaseHelper {
 
     }
 
+
+
+
     /**
      * 分页获取下载数据
      *
@@ -110,6 +113,11 @@ public class VideoDownloadDatabaseHelper {
     public void deleteDownloadItemByUrl(VideoTaskItem item) {
         Log.e("asdf","delete"+" "+item.mName);
         OkDownloaderDatabase.getInstance().videoTaskItemDao().deleteByUrl(item.mUrl);
+    }
+
+    public VideoTaskItem getItemByUrl( String url) {
+        VideoTaskItem videoTaskItem = OkDownloaderDatabase.getInstance().videoTaskItemDao().getItemByUrl(url);
+        return videoTaskItem;
     }
 
 }

@@ -20,7 +20,6 @@ import com.baofu.downloader.VideoDownloadQueue;
 import com.baofu.downloader.VideoInfoParserManager;
 import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.database.VideoDownloadDatabaseHelper;
-import com.baofu.downloader.database.VideoDownloadSQLiteHelper;
 import com.baofu.downloader.listener.DownloadListener;
 import com.baofu.downloader.listener.IDownloadInfosCallback;
 import com.baofu.downloader.listener.IDownloadListener;
@@ -57,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Response;
 
@@ -183,7 +181,7 @@ public class VideoDownloadManager {
                         taskItem = item;
                     }
                 }catch (Exception e){
-                    e.printStackTrace();
+                    Log.e(TAG, "发生异常: ", e); 
                 }
             } else {
                 mVideoDownloadQueue.offer(taskItem);
@@ -293,7 +291,7 @@ public class VideoDownloadManager {
                             }
                             VideoDownloadUtils.close(bufferedReader, reader);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "发生异常: ", e); 
                         }
 
                     }
@@ -342,7 +340,7 @@ public class VideoDownloadManager {
                         startBaseVideoDownloadTask(taskItem);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "发生异常: ", e); 
 //                    try {
 //                        for (Call call : OkHttpUtil.getInstance().mOkHttpClient.dispatcher().queuedCalls()) {
 //                            if (taskItem.getUrl().equals(call.request().url().url().toString())) {
@@ -727,6 +725,8 @@ public class VideoDownloadManager {
         }
     }
 
+
+
     //Delete one task
     private void deleteVideoTask(VideoTaskItem taskItem, boolean shouldDeleteSourceFile) {
 
@@ -745,12 +745,12 @@ public class VideoDownloadManager {
             try {
                 VideoStorageUtils.delete(privateFile);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e); 
             }
             try {
                 VideoStorageUtils.delete(publicFile);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e); 
             }
 
             VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
@@ -761,7 +761,7 @@ public class VideoDownloadManager {
                     VideoStorageUtils.delete(m3u8.getParentFile());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e); 
             }
 
 
@@ -1090,7 +1090,6 @@ public class VideoDownloadManager {
     /**
      * 更新数据库
      *
-     * @param taskItem
      */
     private void markDownloadFinishEvent(VideoTaskItem taskItem) {
         if(mConfig.openDb){

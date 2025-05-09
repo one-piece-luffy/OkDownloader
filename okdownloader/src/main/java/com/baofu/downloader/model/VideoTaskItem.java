@@ -67,6 +67,13 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public int sort;
     //同名的话覆盖写入
     public boolean overwrite=true;
+    //下载分组：用于区分是网站下载还是ins下载的
+    public String downloadGroup;
+    // post/get
+    public String method;
+    //sort为空时，用sort2排序
+    public int sort2;
+    public long createTime;
 
     @Ignore
     public boolean isDownloadSuc;//下载成功
@@ -80,23 +87,14 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public boolean skipM3u8;
     @Ignore
     public Exception exception;
-
-    //下载分组：用于区分是网站下载还是ins下载的
-    public String downloadGroup;
-    // post/get
-    public String method;
-
     //自定义消息，不存入数据库
     @Ignore
     public String message;
     @Ignore
     public int notificationId;
-    //sort为空时，用sort2排序
-    public int sort2;
     //是否开启通知
     @Ignore
     public boolean notify = true;
-    public long createTime;
     //只在wifi下下载
     @Ignore
     public boolean onlyWifi;
