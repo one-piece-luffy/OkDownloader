@@ -22,6 +22,7 @@ import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.AES128Utils;
 import com.baofu.downloader.utils.DownloadExceptionUtils;
+import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.FFmpegUtils;
 import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
@@ -165,6 +166,21 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 }
                 mTaskItem.videoLength = (long) length;
                 Log.e(TAG, "已下载的大小:" + mCurrentDownloaddSize.get());
+
+
+                File coverFile = new File(mSaveDir, mTaskItem.mName+"_cover.jpg");
+                if (VideoDownloadManager.getInstance().mConfig.saveCover && (!coverFile.exists() || coverFile.length() == 0)) {
+                    //下载封面
+                    DownloadExecutor.execute(() -> {
+                        try {
+                            downloadCover(coverFile, mTaskItem.mCoverUrl);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+
+
                 for (int index = 0; index < mTotalTs; index++) {
                     final M3U8Seg ts = mTsList.get(index);
                     if (ts.success || ts.failed) {
@@ -172,6 +188,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         continue;
                     }
                     try {
+
                         mDownloadExecutor.execute(() -> {
                             if (ts.hasInitSegment()) {
                                 String tsInitSegmentName = ts.getInitSegmentName();
@@ -941,5 +958,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             tempM3U8File.renameTo(localM3U8File);
         }
     }
+
+
 }
 

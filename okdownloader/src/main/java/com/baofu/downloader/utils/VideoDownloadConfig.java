@@ -10,16 +10,11 @@ public class VideoDownloadConfig {
     public String publicPath;
     //私有目录保存路径
     public String privatePath;
-    //保存到公共目录
-    public boolean saveAsPublic;
     private int readTimeOut;
     private int connTimeOut;
     private int writeTimeOut;
-    public boolean ignoreAllCertErrors;
     //并发下载数
     public int concurrentCount;
-    public boolean shouldM3U8Merged;
-    public boolean rangeDownload;
     public Context context;
     public boolean saveCover;
     //开启数据库存储，会将下载进度等数据都保存到数据库
@@ -32,7 +27,7 @@ public class VideoDownloadConfig {
     //下载失败重试次数
     public int retryCount = 1;
     //true:使用workmanager下载，false:使用service下载
-    public boolean useWorker=true;
+    public boolean useWorker = true;
 
 
     public int getReadTimeOut(){
@@ -88,10 +83,6 @@ public class VideoDownloadConfig {
             return this;
         }
 
-        public Builder ignoreAllCertErrors(boolean ignoreAllCertErrors) {
-            mConfig.ignoreAllCertErrors = ignoreAllCertErrors;
-            return this;
-        }
 
 
         public Builder concurrentCount(int concurrentCount) {
@@ -100,15 +91,6 @@ public class VideoDownloadConfig {
         }
 
 
-        public Builder shouldM3U8Merged(boolean shouldM3U8Merged) {
-            mConfig.shouldM3U8Merged = shouldM3U8Merged;
-            return this;
-        }
-
-        public Builder rangeDownload(boolean rangeDownload) {
-            mConfig.rangeDownload = rangeDownload;
-            return this;
-        }
         public Builder context(Context context) {
             mConfig.context = context;
             return this;
@@ -137,10 +119,6 @@ public class VideoDownloadConfig {
         }
         public Builder useWorker(boolean useWorker) {
             mConfig.useWorker = useWorker;
-            return this;
-        }
-        public Builder saveAsPublic(boolean saveAsPublic) {
-            mConfig.saveAsPublic = saveAsPublic;
             return this;
         }
         public Builder retryCount(int retryCount) {

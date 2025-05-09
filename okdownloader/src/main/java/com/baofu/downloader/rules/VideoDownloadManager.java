@@ -755,6 +755,7 @@ public class VideoDownloadManager {
 
             VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
 
+
             try {
                 if (!TextUtils.isEmpty(taskItem.mM3u8FilePath)) {
                     File m3u8 = new File(taskItem.mM3u8FilePath);
@@ -763,11 +764,12 @@ public class VideoDownloadManager {
             } catch (Exception e) {
                 Log.e(TAG, "发生异常: ", e); 
             }
-
+            VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.mCoverPath);
 
             Log.e(TAG, "asdf===private:" + privateFile.getAbsolutePath());
             Log.e(TAG, "asdf===public:" + publicFile.getAbsolutePath());
             Log.e(TAG, "asdf===filepath:" + taskItem.getFilePath());
+            Log.e(TAG, "asdf===cover:" + taskItem.mCoverPath);
 
         }
         mVideoDownloadTaskMap.remove(taskItem.getUrl());
@@ -1048,7 +1050,6 @@ public class VideoDownloadManager {
     private void handleOnDownloadSuccess(VideoTaskItem taskItem) {
         removeDownloadQueue(taskItem);
 
-        LogUtils.i(TAG, "handleOnDownloadSuccess shouldM3U8Merged=" + mConfig.shouldM3U8Merged + ", isHlsType=" + taskItem.isHlsType());
         if (mGlobalDownloadListener != null) {
             mGlobalDownloadListener.onDownloadSuccess(taskItem);
         }

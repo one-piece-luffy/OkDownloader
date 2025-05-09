@@ -35,6 +35,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.github.one-piece-luffy:PermissionHelp:1.5.2'
+    implementation 'com.github.one-piece-luffy:ImageLoader:2.5.23'
     implementation project(path: ':okdownloader')
     implementation 'androidx.activity:activity:1.10.0'
 //    implementation 'com.github.one-piece-luffy:OkDownloader:1.1.0'

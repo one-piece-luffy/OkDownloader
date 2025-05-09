@@ -45,11 +45,10 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public long mLastUpdateTime;        //上一次更新数据库的时间
     private String fileName;            //文件名
     public String mFilePath;            //文件完整路径(包括文件名)
-    public String mM3u8FilePath;            //m3u8文件完整路径(包括文件名)
+    public String mM3u8FilePath;            //m3u8文件完整路径(括文件名)
     public boolean mPaused;
     public String mName;//用于显示的名称
-    @Ignore
-    public boolean isSelect;//是否选中
+
     public boolean merged;
     public String header;//下载时带的请求头
     public String sourceUrl;//源网页地址
@@ -58,7 +57,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     public String videoLengthStr;//视频时长
     public long videoLength;//视频时长
     public long estimateSize;//m3u8预估的总大小（第一个ts的大小乘以总的ts个数）
-    public boolean privateFile;//隐私文件
+    public boolean privateFile;//隐私文件,false:下载到私有目录,true:下载到公有目录
     public String groupId;
 
     // 分辨率（质量）
@@ -74,7 +73,8 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     //sort为空时，用sort2排序
     public int sort2;
     public long createTime;
-
+    @Ignore
+    public boolean isSelect;//是否选中
     @Ignore
     public boolean isDownloadSuc;//下载成功
     @Ignore

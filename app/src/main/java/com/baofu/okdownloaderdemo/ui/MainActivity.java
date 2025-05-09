@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
+import com.allfootball.news.imageloader.ImageLoader;
 import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.model.VideoTaskState;
@@ -41,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
     Handler handler=new Handler(Looper.getMainLooper());
     ActivityMainBinding dataBinding;
     VideoTaskItem mVideoTaskItem;
-//    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
+    String cover="https://img2.baidu.com/it/u=1853150649,4204942553&fm=253&app=138&f=JPEG?w=800&h=1422";
+    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+//    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -191,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
         VideoTaskItem item = new VideoTaskItem(link);
         item.mName = "图片";
-        item.mCoverUrl = link;
+        item.mCoverUrl = cover;
 
         item.setFileName(item.mName);
         item.overwrite = false;
@@ -201,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
 //        header.put("referer",link);
         item.header= VideoDownloadUtils.mapToJsonString(header);
         item.notify=true;
-        item.privateFile=false;
+        item.privateFile=true;
         item.onlyWifi=true;
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
@@ -288,8 +290,14 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(MainActivity.this, "下载成功", Toast.LENGTH_SHORT).show();
+
+                        ImageLoader.getInstance()
+                                .imageView(dataBinding.cover)
+                                .url(mVideoTaskItem.mCoverPath)
+                                .loadImage(MainActivity.this);
                     }
                 });
+
             }
 
 

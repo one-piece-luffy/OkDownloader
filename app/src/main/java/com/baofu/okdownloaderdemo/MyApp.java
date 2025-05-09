@@ -36,14 +36,12 @@ public class MyApp extends Application {
                     .writeTimeOut(20)
                     .retryCount(2)
                     .concurrentCount(2) //并发数
-                    .ignoreAllCertErrors(true)
                     .context(this)
-                    .saveCover(false)
+                    .saveCover(true)
                     .openDb(true)
                     .userAgent(AppConfig.UserAgent)
                     .decryptM3u8(true)
                     .mergeM3u8(false)
-                    .saveAsPublic(true)//保存在共有目录
                     .useWorker(true)
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
