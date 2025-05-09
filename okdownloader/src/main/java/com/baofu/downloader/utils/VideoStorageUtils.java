@@ -154,6 +154,7 @@ public class VideoStorageUtils {
 
 
     }
+
     public static boolean isMainThread() {
         return Looper.getMainLooper() == Looper.myLooper();
     }
@@ -174,7 +175,7 @@ public class VideoStorageUtils {
 
     }
 
-    private static void deleteOrThrow(File file) throws IOException {
+    public static void deleteFile2(File file)  {
         if (file.exists()) {
             Path path = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -39,7 +39,6 @@ android {
 
 dependencies {
     api 'com.arthenica:smart-exception-java:0.2.1'
-
 //    fileTree(dir: 'libs', include: ['*.aar'])
 //    api files('libs/ffmpeg-kit-full-6.0-2.aar')
 

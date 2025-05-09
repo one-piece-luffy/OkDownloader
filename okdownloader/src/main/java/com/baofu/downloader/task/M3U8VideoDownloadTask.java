@@ -14,12 +14,12 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 
 import com.baofu.downloader.VideoDownloadException;
-import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.m3u8.M3U8Constants;
 import com.baofu.downloader.m3u8.M3U8Seg;
 import com.baofu.downloader.model.VideoTaskItem;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.AES128Utils;
 import com.baofu.downloader.utils.DownloadExceptionUtils;
 import com.baofu.downloader.utils.FFmpegUtils;
@@ -32,7 +32,6 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,6 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.Response;
@@ -65,9 +64,9 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
     private final Object mCreateFileLock = new Object();
 
     private final M3U8 mM3U8;
-    private List<M3U8Seg> mTsList;
-    private volatile int mCurTs = 0;
-    private int mTotalTs;
+    private final List<M3U8Seg> mTsList;
+    private final AtomicInteger mCurTs = new AtomicInteger(0);
+    private final int mTotalTs;
     private long mTotalSize;
     private int mErrorTsCont;//ts下载失败的个数
     private Timer netSpeedTimer;//定时任务
@@ -84,14 +83,13 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         mTsList = m3u8.getTsList();
         mTotalTs = mTsList.size();
         mPercent = taskItem.getPercent();
-        // TODO: 2025/3/14
         Map<String,String> header=VideoDownloadUtils.getTaskHeader(taskItem);
         if(header!=null){
             header.put("Connection", "close");
             mTaskItem.header=VideoDownloadUtils.mapToJsonString(header);
         }
         mTaskItem.setTotalTs(mTotalTs);
-        mTaskItem.setCurTs(mCurTs);
+        mTaskItem.setCurTs(mCurTs.get());
 
         if (mTaskItem.estimateSize > 0) {
             //暂时把预估大小设置为文件的总大小，等下载完成后再更新准确的总大小
@@ -100,12 +98,12 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
     }
 
     private void initM3U8Ts() {
-        if (mCurTs == mTotalTs) {
+        if (mCurTs.get() == mTotalTs) {
             mTaskItem.setIsCompleted(true);
         }
         mTaskItem.suffix = ".m3u8";
         mCurrentDownloaddSize.set(0);
-        mCurTs = 0;
+        mCurTs.set(0);
         fileName = VideoDownloadUtils.getFileNameWithSuffix(mTaskItem);
     }
 
@@ -158,7 +156,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             mCurrentDownloaddSize.getAndAdd(ts.getTsSize());
 
                         } else {
-                            tempTsFile.delete();
+                            VideoStorageUtils.deleteFile2(tempTsFile);
                         }
 
                     }
@@ -169,7 +167,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 for (int index = 0; index < mTotalTs; index++) {
                     final M3U8Seg ts = mTsList.get(index);
                     if (ts.success || ts.failed) {
-                        mCurTs++;
+                        mCurTs.incrementAndGet(); // 原子操作
                         continue;
                     }
                     try {
@@ -210,13 +208,13 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                                 }
                                 Log.e(TAG, "错误的ts超过30%: "+err);
                                 if (isRunning.get()) {
-                                    notifyDownloadError(new VideoDownloadException("m3u8:" + err.toString()));
+                                    notifyDownloadError(new VideoDownloadException("m3u8:" + err));
                                 }
 
                             }
                         });
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发生异常: ", e);
                     }
 
 
@@ -230,7 +228,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         //等待中
                         Thread.sleep(1500);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发生异常: ", e);
                     }
 
                     try {
@@ -241,7 +239,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         long taskCount = tpe.getTaskCount();
                         Log.i(TAG, mTaskItem.mName+" 当前排队线程数：" + queueSize + " 当前活动线程数：" + activeCount + " 执行完成线程数：" + completedTaskCount + " 总线程数：" + taskCount);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发生异常: ", e);
                     }
 
 
@@ -273,7 +271,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             }
 
                         } else {
-                            mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
+                            mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs.get(), mTotalTs, mSpeed);
                             notifyDownloadFinish();
 
 
@@ -312,7 +310,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 if (!mTaskItem.privateFile) {
                     copyToAlbum();
                 }
-                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
+                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs.get(), mTotalTs, mSpeed);
                 notifyDownloadFinish();
 
             }
@@ -349,7 +347,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 if (!mTaskItem.privateFile) {
                     copyToAlbum();
                 }
-                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs, mTotalTs, mSpeed);
+                mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mTotalSize, mCurTs.get(), mTotalTs, mSpeed);
                 notifyDownloadFinish();
                 mCurrentCachedSize = VideoStorageUtils.countTotalSize(mSaveDir);
                 Log.i(TAG, "文件目录大小:" + VideoDownloadUtils.getSizeStr(mCurrentCachedSize));
@@ -380,7 +378,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             //删除旧文件
             VideoStorageUtils.delete(mergeFile);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "发生异常: ", e);
         }
         //适配android10公共目录下载后android10及以上可以不用刷新媒体库
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
@@ -391,7 +389,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e);
             }
         }
     }
@@ -424,18 +422,27 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             ist = Files.newInputStream(orgFile.toPath());
             if (insertUri != null) {
 
-                ParcelFileDescriptor pdf = context.getContentResolver().openFileDescriptor(insertUri, "rw");
-                ost = new FileOutputStream(pdf.getFileDescriptor());
+                try (  ParcelFileDescriptor pdf = context.getContentResolver().openFileDescriptor(insertUri, "rw")) {
+                    // 使用 pfd 进行操作，无需手动关闭
+                    if(pdf!=null){
+                        ost = new FileOutputStream(pdf.getFileDescriptor());
+                    }
+
+                } catch (IOException e) {
+                    // 处理异常
+                }
+
+
             }
             if (ost != null) {
                 byte[] buffer = new byte[1024 * 1024];
-                int byteCount = 0;
+                int byteCount ;
                 while ((byteCount = ist.read(buffer)) != -1) {  // 循环从输入流读取 buffer字节
                     ost.write(buffer, 0, byteCount);        // 将读取的输入流写入到输出流
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "发生异常: ", e); 
         } finally {
             try {
                 if (ist != null) {
@@ -445,7 +452,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     ost.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e); 
             }
         }
     }
@@ -471,7 +478,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             //将fileChannelInput通道的数据，写入到fileChannelOutput通道
             fileChannelInput.transferTo(0, fileChannelInput.size(), fileChannelOutput);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "发生异常: ", e); 
         } finally {
             try {
                 if (fileInputStream != null) {
@@ -487,7 +494,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     fileChannelOutput.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, "发生异常: ", e); 
             }
         }
     }
@@ -513,7 +520,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     try {
                         mDownloadExecutor.shutdownNow();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发生异常: ", e); 
                     }
 
                 }
@@ -543,7 +550,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         mDownloadExecutor.shutdownNow();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "发生异常: ", e); 
                 }
 
             }
@@ -587,21 +594,21 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             return;
         }
         if (mTaskItem.isCompleted()) {
-            mCurTs = mTotalTs;
-            mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mCurrentDownloaddSize.get(), mCurTs, mTotalTs, mSpeed);
+            mCurTs.set(mTotalTs);
+            mDownloadTaskListener.onTaskProgressForM3U8(100.0f, mCurrentDownloaddSize.get(), mCurTs.get(), mTotalTs, mSpeed);
             mPercent = 100.0f;
             mTotalSize = mCurrentDownloaddSize.get();
             notifyDownloadFinish();
             return;
         }
-        if (mCurTs >= mTotalTs) {
-            mCurTs = mTotalTs;
+        if (mCurTs.get() >= mTotalTs) {
+            mCurTs.set(mTotalTs);
         }
-        float percent = mCurTs * 1.0f * 100 / mTotalTs;
+        float percent = mCurTs.get() * 1.0f * 100 / mTotalTs;
         if (!VideoDownloadUtils.isFloatEqual(percent, mPercent) && mCurrentDownloaddSize.get() > mLastCachedSize) {
             long nowTime = System.currentTimeMillis();
             mSpeed = (mCurrentDownloaddSize.get() - mLastCachedSize) * 1000 * 1.0f / (nowTime - mLastInvokeTime);
-            mDownloadTaskListener.onTaskProgressForM3U8(percent, mCurrentDownloaddSize.get(), mCurTs, mTotalTs, mSpeed);
+            mDownloadTaskListener.onTaskProgressForM3U8(percent, mCurrentDownloaddSize.get(), mCurTs.get(), mTotalTs, mSpeed);
             mPercent = percent;
             mLastCachedSize = mCurrentDownloaddSize.get();
             mLastInvokeTime = nowTime;
@@ -681,7 +688,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             fileOutputStream.write(result);
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Log.e(TAG, "发生异常: ", e); 
                         ts.setRetryCount(ts.getRetryCount() + 1);
                         if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
                             Log.e(TAG, "====retry, exception=" + e.getMessage());
@@ -697,7 +704,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     } finally {
                         if (fileOutputStream != null) {
                             fileOutputStream.close();
-                            tsInitSegmentFile.delete();
+                            VideoStorageUtils.delete(tsInitSegmentFile);
                         }
                     }
                 } else {
@@ -712,7 +719,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 }
                 ts.setContentLength(contentLength);
                 mCurrentDownloaddSize.getAndAdd(contentLength);
-                mCurTs++;
+                mCurTs.incrementAndGet();
                 ts.success = true;
             } else {
                 onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("response is null or code=" + responseCode));
@@ -722,7 +729,6 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         } catch (InterruptedIOException e) {
             //被中断了，使用stop时会抛出这个，不需要处理
             Log.e(TAG, "InterruptedIOException");
-            return;
         } catch (Exception e) {
             onDownloadFileErr(ts,file,videoUrl,responseCode,e);
         } finally {
@@ -735,14 +741,15 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 try {
                     rbc.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "发生异常: ", e); 
+
                 }
             }
             if (foutc != null) {
                 try {
                     foutc.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "发生异常: ", e); 
                 }
             }
         }
@@ -798,7 +805,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             byte[] buffer = new byte[bufferSize << 1];
 
             while ((len = inputStream.read(data)) != -1) {
-                totalLength += (long) len;
+                totalLength +=  len;
                 mCurrentLength += len;
                 System.arraycopy(data, 0, buffer, position, data.length);
                 position += len;
@@ -819,7 +826,6 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 
         } catch (InterruptedIOException e) {
             //被中断了，使用stop时会抛出这个，不需要处理
-            return;
         } catch (IOException e) {
             if (file.exists() && ((contentLength > 0 && contentLength == file.length()) || (contentLength == -1 && totalLength == file.length()))) {
                 //这时候也能说明ts已经下载好了
@@ -835,7 +841,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         } else {
                             Log.e(TAG, file.getAbsolutePath() + ", length=" + file.length() + " contentLength=" + contentLength + ", saveFile failed1, exception=" + e);
                             if (file.exists()) {
-                                file.delete();
+                                VideoStorageUtils.deleteFile2(file);
                             }
                             ts.failed = true;
                             mErrorTsCont++;
@@ -846,7 +852,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 } else {
                     Log.e(TAG, file.getAbsolutePath() + ", length=" + file.length() + " contentLength=" + contentLength + ", saveFile failed2, exception=" + e);
                     if (file.exists()) {
-                        file.delete();
+                        VideoStorageUtils.deleteFile2(file);
                     }
                     ts.failed = true;
                     mErrorTsCont++;
@@ -866,7 +872,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         synchronized (mFileLock) {
             File tempM3U8File = new File(mSaveDir, "temp.m3u8");
             if (tempM3U8File.exists()) {
-                tempM3U8File.delete();
+                VideoStorageUtils.deleteFile2(tempM3U8File);
             }
             Log.i(TAG, "createLocalM3U8File");
 
@@ -922,7 +928,8 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 //            File localM3U8File = new File(mSaveDir, mSaveName + "_" + VideoDownloadUtils.LOCAL_M3U8);
             File localM3U8File = new File(mSaveDir, fileName);
             if (localM3U8File.exists()) {
-                localM3U8File.delete();
+                VideoStorageUtils.deleteFile2(localM3U8File);
+
             }
             tempM3U8File.renameTo(localM3U8File);
         }

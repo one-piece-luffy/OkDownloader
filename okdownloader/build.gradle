@@ -56,7 +56,7 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation 'com.arthenica:smart-exception-java:0.2.1'
+
 //    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
 //    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
 //    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
