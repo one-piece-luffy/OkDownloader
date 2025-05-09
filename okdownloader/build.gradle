@@ -57,20 +57,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
-//    implementation 'com.github.JeffMony:JeffVideoLib:2.5.0'
-//    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.4.LTS'
-//    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
-//    api "androidx.work:work-runtime:2.8.1"
-
-
-//    implementation files('libs/ffmpeg-kit-6.0.2.jar')
-
-//    fileTree(dir: 'libs', include: ['*.aar'])
-//    implementation files('libs/ffmpeg-kit-full-6.0-2.aar')  // 单文件引入
-
-    implementation project(':ffmpeg-kit') // 间接依赖 AAR
-
-
+    implementation 'com.github.one-piece-luffy:ffmpeg-kit:6.0.2'
 
 
 
