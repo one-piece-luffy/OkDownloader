@@ -187,7 +187,7 @@ public class AllDownloadTask extends VideoDownloadTask {
                     downloadFactory.download();
                 }
             }
-            File coverFile = new File(mSaveDir, mTaskItem.mName+"_cover.jpg");
+            File coverFile = new File(mSaveDir, mTaskItem.mName+VideoDownloadConstants.COVER_SUFFIX);
             if (VideoDownloadManager.getInstance().mConfig.saveCover && (!coverFile.exists() || coverFile.length() == 0)) {
                 //下载封面
                 DownloadExecutor.execute(() -> {

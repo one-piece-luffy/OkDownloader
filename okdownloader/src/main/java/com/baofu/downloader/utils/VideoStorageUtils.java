@@ -152,7 +152,6 @@ public class VideoStorageUtils {
             e.printStackTrace();
         }
 
-
     }
 
     public static boolean isMainThread() {

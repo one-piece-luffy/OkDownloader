@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding dataBinding;
     VideoTaskItem mVideoTaskItem;
     String cover="https://img2.baidu.com/it/u=1853150649,4204942553&fm=253&app=138&f=JPEG?w=800&h=1422";
-    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-//    String link="https://vip.ffzy-video.com/20250313/13895_b3633b88/index.m3u8";
+//    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
+    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -92,10 +92,6 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             });
                 }
-
-
-
-
 
 
             }
@@ -203,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
 //        header.put("referer",link);
         item.header= VideoDownloadUtils.mapToJsonString(header);
         item.notify=true;
-        item.privateFile=true;
+        item.privateFile=false;
         item.onlyWifi=true;
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改

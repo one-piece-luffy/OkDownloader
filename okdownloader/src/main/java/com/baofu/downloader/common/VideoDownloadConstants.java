@@ -33,4 +33,5 @@ public class VideoDownloadConstants {
     public final static int MAX_RETRY_COUNT_503 = 4;
 
     public final static String CHANNEL_ID="download_channel";
+    public final static String COVER_SUFFIX="_cover.jpg";
 }
