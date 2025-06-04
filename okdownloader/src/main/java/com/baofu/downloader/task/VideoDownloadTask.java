@@ -15,6 +15,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import okhttp3.Response;
 
@@ -30,13 +31,15 @@ public abstract class VideoDownloadTask {
     protected final String mFinalUrl;
     protected File mSaveDir;
     protected String mSaveName;
-    protected ExecutorService mDownloadExecutor;
+    protected ThreadPoolExecutor mDownloadExecutor;
     protected IDownloadTaskListener mDownloadTaskListener;
     protected long mLastCachedSize = 0L;
     protected long mCurrentCachedSize = 0L;
     protected long mLastInvokeTime = 0L;
     protected float mSpeed = 0.0f;
     protected float mPercent = 0.01f;
+    protected float maxSpeed = 0;
+    protected float minSpeed = 0;
 
     protected VideoDownloadTask(VideoTaskItem taskItem) {
         mTaskItem = taskItem;

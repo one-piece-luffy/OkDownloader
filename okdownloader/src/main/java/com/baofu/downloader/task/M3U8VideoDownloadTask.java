@@ -53,7 +53,9 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -140,11 +142,11 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             mDownloadExecutor.shutdownNow();
         }
         mDownloadExecutor = null;
-//        mDownloadExecutor = new ThreadPoolExecutor(THREAD_COUNT, THREAD_COUNT, 0L,
-//                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), Executors.defaultThreadFactory(),
-//                new ThreadPoolExecutor.DiscardOldestPolicy());
+        mDownloadExecutor = new ThreadPoolExecutor(THREAD_COUNT, THREAD_COUNT, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.DiscardOldestPolicy());
         //任务过多后，存储任务的一个阻塞队列
-        mDownloadExecutor = Executors.newFixedThreadPool(THREAD_COUNT);
+//        mDownloadExecutor = Executors.newFixedThreadPool(THREAD_COUNT);
         isRunning.set(true);
         new Thread() {
             @Override
@@ -701,12 +703,31 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         float percent = mCurTs.get() * 1.0f * 100 / mTotalTs;
         if (!VideoDownloadUtils.isFloatEqual(percent, mPercent) && mCurrentDownloaddSize.get() > mLastCachedSize) {
             long nowTime = System.currentTimeMillis();
-            mSpeed = (mCurrentDownloaddSize.get() - mLastCachedSize) * 1000 * 1.0f / (nowTime - mLastInvokeTime);
+            mSpeed = (mCurrentDownloaddSize.get() - mLastCachedSize)   / ((nowTime - mLastInvokeTime)/1000f);
             mDownloadTaskListener.onTaskProgressForM3U8(percent, mCurrentDownloaddSize.get(), mCurTs.get(), mTotalTs, mSpeed);
             mPercent = percent;
             mLastCachedSize = mCurrentDownloaddSize.get();
             mLastInvokeTime = nowTime;
             Log.i(TAG, mTaskItem.mName+" m3u8  cur:" + mCurTs + " error count:" + mErrorTsCont + " mTotalTs:" + mTotalTs);
+//            线程调度
+//            maxSpeed = Math.max(mSpeed, maxSpeed);
+//            minSpeed = Math.min(mSpeed, minSpeed == 0 ? mSpeed : minSpeed);
+//            Log.e("==asdf","speed:"+VideoDownloadUtils.getSizeStr((long)this.mSpeed) + "/s"+" time:"+((nowTime - mLastInvokeTime)/1000f)+" size:"+( (mCurrentDownloaddSize.get() - mLastCachedSize) /1024f));
+//            float midPoint = (maxSpeed + minSpeed) / 2;
+//            if (mSpeed >= midPoint) {
+//                if (mDownloadExecutor != null) {
+//                    mDownloadExecutor.setCorePoolSize(THREAD_COUNT);
+//                    mDownloadExecutor.setMaximumPoolSize(THREAD_COUNT);
+////                    Log.e(TAG,"=======大于平均速度 speed:"+VideoDownloadUtils.getSizeStr((long) mSpeed)+" mid:"+VideoDownloadUtils.getSizeStr((long) midPoint));
+//                }
+//
+//            } else if (mSpeed < midPoint) {
+//                if (mDownloadExecutor != null) {
+//                    mDownloadExecutor.setCorePoolSize(8);
+//                    mDownloadExecutor.setMaximumPoolSize(8);
+////                    Log.e(TAG,"++++++++小于平均速度 speed:"+VideoDownloadUtils.getSizeStr((long) mSpeed)+" mid:"+VideoDownloadUtils.getSizeStr((long) midPoint));
+//                }
+//            }
         }
     }
 
@@ -828,6 +849,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 } else {
                     ts.setContentLength(contentLength);
                     ts.setTsSize(contentLength);
+//                    Log.e("asdf","content length:"+contentLength+"  str:"+VideoDownloadUtils.getSizeStr((contentLength)));
                     mCurrentDownloaddSize.getAndAdd(contentLength);
                     mCurTs.incrementAndGet();
                     ts.success = true;
