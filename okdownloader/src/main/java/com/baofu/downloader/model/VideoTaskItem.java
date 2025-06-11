@@ -204,6 +204,10 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         return mCurTs;
     }
 
+    public String getGroupId() {
+        return groupId;
+    }
+
     public void setSpeed(float speed) {
         mSpeed = speed;
     }
