@@ -18,6 +18,7 @@ import androidx.work.WorkManager;
 
 import com.baofu.downloader.VideoDownloadQueue;
 import com.baofu.downloader.VideoInfoParserManager;
+import com.baofu.downloader.common.DownloadMode;
 import com.baofu.downloader.common.VideoDownloadConstants;
 import com.baofu.downloader.database.VideoDownloadDatabaseHelper;
 import com.baofu.downloader.listener.DownloadListener;
@@ -131,18 +132,22 @@ public class VideoDownloadManager {
     }
 
     public void startDownload(Context context, VideoTaskItem taskItem) {
-        if (taskItem.notify) {
-            //启动前台服务下载
-            if (taskItem.notificationId <= 0) {
-                taskItem.notificationId = UniqueIdGenerator.generateUniqueId();
-            }
-            if (mConfig != null && !mConfig.useWorker) {
+
+        //启动前台服务下载
+        if (taskItem.notificationId <= 0) {
+            taskItem.notificationId = UniqueIdGenerator.generateUniqueId();
+        }
+        if (mConfig != null) {
+            if (mConfig.downloadMode == DownloadMode.INTENT_SERVICE) {
+                //使用service需要在AndrodiManifest.xml打开注释调的权限
                 Intent intent = new Intent(context, DownloadService.class);
                 taskItem.putExtra(intent);
                 context.startService(intent);
-            } else {
+                Log.e("====asdf","=========service");
+            } else if (mConfig.downloadMode == DownloadMode.WORKER) {
+                Log.e("====asdf","=========WORKER");
                 Data inputData = taskItem.putWorkerData();
-                Constraints constraints=null;
+                Constraints constraints = null;
 
                 // 创建联网约束
                 if (taskItem.onlyWifi) {
@@ -163,10 +168,15 @@ public class VideoDownloadManager {
                         .build();
                 // 将工作请求提交给 WorkManager
                 WorkManager.getInstance(context).enqueue(workRequest);
+            } else {
+                Log.e("====asdf","=========default");
+                startDownload2(taskItem);
             }
         } else {
             startDownload2(taskItem);
         }
+
+
     }
 
     public void startDownload2(VideoTaskItem taskItem) {

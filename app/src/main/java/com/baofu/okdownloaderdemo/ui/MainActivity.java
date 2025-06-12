@@ -5,17 +5,21 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
@@ -44,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
     VideoTaskItem mVideoTaskItem;
     String cover="https://img2.baidu.com/it/u=1853150649,4204942553&fm=253&app=138&f=JPEG?w=800&h=1422";
 //    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-//    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";//短剧
-    String link="https://bfikuncdn.com/20250530/euE2a4l0/index.m3u8";//微短剧
+    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";//短剧
+//    String link="https://bfikuncdn.com/20250530/euE2a4l0/index.m3u8";//微短剧
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -62,6 +66,33 @@ public class MainActivity extends AppCompatActivity {
         dataBinding.download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+                    // 设置对话框标题和消息
+                    builder.setTitle("提示")
+                            .setMessage("请允许应用在后台运行，避免下载中断")
+                            .setPositiveButton("确认", (dialog, which) -> {
+                                // 点击确认按钮时显示Toast
+                                try {
+                                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                                    intent.setData(Uri.parse("package:" + getPackageName()));
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            })
+                            .setNegativeButton("取消", (dialog, which) -> {
+                                // 点击取消按钮时关闭对话框
+                                dialog.dismiss();
+                            });
+
+                    // 创建并显示对话框
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
                             PermissionUtil.asArray(Manifest.permission.POST_NOTIFICATIONS),
@@ -145,8 +176,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-        //设置全局下载监听
-        VideoDownloadManager.getInstance().setGlobalDownloadListener(mListener);
     }
 
 

@@ -27,7 +27,8 @@ public class VideoDownloadConfig {
     //下载失败重试次数
     public int retryCount = 1;
     //true:使用workmanager下载，false:使用service下载
-    public boolean useWorker = true;
+    public int downloadMode;
+    public boolean threadSchedule;
 
 
     public int getReadTimeOut(){
@@ -117,12 +118,16 @@ public class VideoDownloadConfig {
             mConfig.mergeM3u8 = mergeM3u8;
             return this;
         }
-        public Builder useWorker(boolean useWorker) {
-            mConfig.useWorker = useWorker;
+        public Builder downloadMode(int downloadMode) {
+            mConfig.downloadMode = downloadMode;
             return this;
         }
         public Builder retryCount(int retryCount) {
             mConfig.retryCount = retryCount;
+            return this;
+        }
+        public Builder threadSchedule(boolean threadSchedule) {
+            mConfig.threadSchedule = threadSchedule;
             return this;
         }
         public VideoDownloadConfig build() {

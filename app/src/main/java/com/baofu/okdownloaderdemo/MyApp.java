@@ -3,6 +3,7 @@ package com.baofu.okdownloaderdemo;
 import android.app.Application;
 import android.os.Environment;
 
+import com.baofu.downloader.common.DownloadMode;
 import com.baofu.downloader.utils.VideoDownloadConfig;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.VideoStorageUtils;
@@ -42,7 +43,8 @@ public class MyApp extends Application {
                     .userAgent(AppConfig.UserAgent)
                     .decryptM3u8(true)
                     .mergeM3u8(false)
-                    .useWorker(true)
+                    .threadSchedule(false)
+                    .downloadMode(DownloadMode.WORKER)
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
         } catch (Exception e) {
