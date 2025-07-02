@@ -12,8 +12,10 @@ import android.util.Log;
 
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.ForegroundInfo;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import com.baofu.downloader.VideoDownloadQueue;
@@ -367,29 +369,6 @@ public class VideoDownloadManager {
         });
     }
 
-    /**
-     * 解析已经预加载过的m3u8
-     *
-     * @param taskItem
-     */
-    private void parseCacheVideoDownloadInfo(final VideoTaskItem taskItem) {
-        VideoInfoParserManager.getInstance().parseLocalM3U8File(taskItem, new IVideoInfoParseListener() {
-            @Override
-            public void onM3U8FileParseSuccess(VideoTaskItem info, M3U8 m3u8) {
-                Log.i(TAG, "download from suc");
-                String saveName = VideoDownloadUtils.computeMD5(info.getUrl());
-                taskItem.setSaveDir(mConfig.publicPath + "/" + saveName);
-                taskItem.setVideoType(Video.Type.HLS_TYPE);
-                startM3U8VideoDownloadTask(taskItem, m3u8);
-            }
-
-            @Override
-            public void onM3U8FileParseFailed(VideoTaskItem info, Throwable error) {
-                Log.i(TAG, "download from fail");
-                parseNetworkVideoInfo(taskItem);
-            }
-        });
-    }
 
     private void startM3U8VideoDownloadTask(final VideoTaskItem taskItem, M3U8 m3u8) {
 
@@ -740,7 +719,6 @@ public class VideoDownloadManager {
     //Delete one task
     private void deleteVideoTask(VideoTaskItem taskItem, boolean shouldDeleteSourceFile) {
 
-        boolean a = isMainThread();
         pauseDownloadTask(taskItem);
 //                String saveName = VideoDownloadUtils.getFileName(taskItem, null, false);
         File privateFile = new File(VideoDownloadManager.getInstance().mConfig.privatePath + File.separator + taskItem.mFileHash);
