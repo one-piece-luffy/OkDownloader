@@ -811,8 +811,9 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     if (contentLength == 0) {
                         contentLength = tsInitSegmentFile.length();
                     } else if (!sizeSimilar(contentLength, tsInitSegmentFile.length())) {
-                        Log.e("asdfg", file.getName() + " file length:" + file.length() + " content length:" + contentLength);
-                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length != content length"));
+                        String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
+                        Log.e("asdfg", log);
+                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception(log));
                         return;
 
                     }
@@ -863,8 +864,9 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     if (contentLength == 0) {
                         contentLength = file.length();
                     } else if (!sizeSimilar(contentLength, file.length())) {
-                        Log.e("asdfg", file.getName() + " file length:" + file.length() + " content length:" + contentLength);
-                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length != content length"));
+                        String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
+                        Log.e("asdfg", log);
+                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception(log));
                         return;
 
                     }
