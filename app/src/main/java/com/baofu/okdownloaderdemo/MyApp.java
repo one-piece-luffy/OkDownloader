@@ -44,7 +44,7 @@ public class MyApp extends Application {
                     .decryptM3u8(true)
                     .mergeM3u8(false)
                     .threadSchedule(false)
-                    .downloadMode(DownloadMode.WORKER)
+                    .downloadMode(DownloadMode.DEFAULT)
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
         } catch (Exception e) {

@@ -83,6 +83,8 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
     Map<String,String> errMsgMap=new ConcurrentHashMap<>();
     final int MAX_ERR_MAP_COUNT = 3;
     ExecutorService executorService;
+    //5kb
+    final long SIZE_THRESHOLD = 5 * 1024;
 
     public M3U8VideoDownloadTask(VideoTaskItem taskItem, M3U8 m3u8) {
         super(taskItem);
@@ -286,10 +288,11 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         final M3U8Seg ts = mTsList.get(index);
                         if(ts.success){
                             File tempTsFile = new File(mSaveDir, ts.getIndexName());
-                            if (tempTsFile.exists()&&tempTsFile.length() > 0) {
+                            if (tempTsFile.exists() && ts.getContentLength() > 0 && tempTsFile.length() > 0 && sizeSimilar(tempTsFile.length(), ts.getContentLength())) {
                                 continue;
                             }
                         }
+                        Log.e("asdf","====="+ts.getIndexName()+"  err retry");
                         mErrorTsCont.incrementAndGet();
 
                         //设置重试次数为最大值，这样下载失败不再重试
@@ -805,6 +808,15 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     foutc = fos.getChannel();
                     foutc.transferFrom(rbc, 0, Long.MAX_VALUE);
 
+                    if (contentLength == 0) {
+                        contentLength = tsInitSegmentFile.length();
+                    } else if (!sizeSimilar(contentLength, tsInitSegmentFile.length())) {
+                        Log.e("asdfg", file.getName() + " file length:" + file.length() + " content length:" + contentLength);
+                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length != content length"));
+                        return;
+
+                    }
+
                     FileOutputStream fileOutputStream = null;
                     try {
                         byte[] result = AES128Utils.dencryption(AES128Utils.readFile(tsInitSegmentFile), encryptionKey, iv);
@@ -848,8 +860,13 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     fos = new FileOutputStream(file);
                     foutc = fos.getChannel();
                     foutc.transferFrom(rbc, 0, Long.MAX_VALUE);
-                    if (contentLength <= 0) {
+                    if (contentLength == 0) {
                         contentLength = file.length();
+                    } else if (!sizeSimilar(contentLength, file.length())) {
+                        Log.e("asdfg", file.getName() + " file length:" + file.length() + " content length:" + contentLength);
+                        onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length != content length"));
+                        return;
+
                     }
                 }
 
@@ -1030,6 +1047,24 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         }
     }
 
+    /**
+     * 判断两个文件大小是否近似
+     * 允许有5kb误差
+     */
+    private boolean sizeSimilar(long size1,long size2){
+
+        long difference = Math.abs(size1 - size2);
+
+        if (difference <= SIZE_THRESHOLD) {
+//            System.out.println("两个文件大小相差在10KB以内");
+
+            return true;
+        } else {
+//            System.out.println("两个文件大小相差超过10KB");
+//            Log.e("asdfg","两个文件大小相差:"+difference);
+            return false;
+        }
+    }
     /**
      * 创建本地m3u8文件，可用于离线播放
      */

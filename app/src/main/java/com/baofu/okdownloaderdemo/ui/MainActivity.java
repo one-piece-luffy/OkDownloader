@@ -49,8 +49,10 @@ public class MainActivity extends AppCompatActivity {
     VideoTaskItem mVideoTaskItem;
     String cover="https://img2.baidu.com/it/u=1853150649,4204942553&fm=253&app=138&f=JPEG?w=800&h=1422";
 //    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";//短剧
+//    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";//短剧
 //    String link="https://bfikuncdn.com/20250608/GFr5gwxA/index.m3u8";//微短剧
+
+    String link="https://c1.rrcdnbf2.com/video/langkexing/%E7%AC%AC10%E9%9B%86/index.m3u8";
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -186,40 +188,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void notifyTest(){
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel mNotificationChannel = notificationManager.getNotificationChannel(VideoDownloadConstants.CHANNEL_ID);
-            if (mNotificationChannel == null) {
-                // 创建通知渠道
-                NotificationChannel notificationChannel = new NotificationChannel(VideoDownloadConstants.CHANNEL_ID, "download",
-                        NotificationManager.IMPORTANCE_DEFAULT);
-                notificationChannel.enableLights(false); //关闭闪光灯
-                notificationChannel.enableVibration(false); //关闭震动
-                notificationChannel.setSound(null, null); //设置静音
-                notificationManager.createNotificationChannel(notificationChannel);
-            }
-        }
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplication(), VideoDownloadConstants.CHANNEL_ID);
-        builder.setContentTitle("haha") //设置标题
-                .setSmallIcon(getApplicationInfo().icon) //设置小图标
-//                    .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-//                            getApplicationInfo().icon)) //设置大图标
-                .setPriority(NotificationCompat.PRIORITY_MAX) //设置通知的优先级
-                .setAutoCancel(false) //设置通知被点击一次不自动取消
-                .setSound(null) //设置静音
-                .setContentText("0%") //设置内容
-                .setProgress(100, 0, false) //设置进度条
-                .setContentIntent(NotificationBuilderManager.createIntent(getApplication(), null, 1)); //设置点击事件
-        if (builder == null)
-            return;
-        int ran= (int) (Math.random()*100);
-//                builder.setContentIntent(createIntent(context, bundle,item.notificationId)); //设置点击事件
-        builder.setContentText( ran+"%");
-        builder.setProgress(100,ran, false);
-        notificationManager.notify(1, builder.build());
-    }
 
     public void startDownload(){
 
@@ -229,7 +197,6 @@ public class MainActivity extends AppCompatActivity {
         item.mCoverUrl = cover;
 
         item.setFileName(item.mName);
-        item.overwrite = false;
         Map<String,String> header=new HashMap<>();
         header.put("user-agent","Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1");
 //                header.put("Range","bytes=0-14188543");
@@ -238,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
         item.notify=true;
         item.privateFile=false;
         item.onlyWifi=true;
+        item.overwrite=true;
         //启动前台服务下载
         //设置通知打开链接可以在VideoDownloadManager的下载完成方法onTaskFinished里修改
         VideoDownloadManager.getInstance().startDownload(MainActivity.this,item);
