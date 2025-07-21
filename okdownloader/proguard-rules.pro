@@ -26,6 +26,7 @@
 -keep class com.baofu.downloader.database.**{*;}
 -keep class com.baofu.downloader.m3u8.**{*;}
 -keep class com.baofu.downloader.common.DownloadMode{*;}
+-keep class com.baofu.downloader.common.VideoDownloadConstants{*;}
 -keep class com.arthenica.ffmpegkit.FFmpegKitConfig {
     native <methods>;
     void log(long, int, byte[]);
