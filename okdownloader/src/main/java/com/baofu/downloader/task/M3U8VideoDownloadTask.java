@@ -181,7 +181,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         }
                     }
                     if (isFail) {
-                        Log.e(TAG,mTaskItem.mName+" fail ts:"+index);
+                        Log.e("asdfg",mTaskItem.mName+" fail ts:"+index);
                         continue;
                     }
 
@@ -395,7 +395,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     }
                     header.put(VideoDownloadConstants.HEADER_FAIL_TS, failTs);
                     mTaskItem.header = VideoDownloadUtils.mapToJsonString(header);
-                    Log.e(TAG,mTaskItem.mName+" fail ts:"+failTs);
+                    Log.e("asdfg",mTaskItem.mName+" fail ts:"+failTs);
                 }
 
 
