@@ -34,4 +34,5 @@ public class VideoDownloadConstants {
 
     public final static String CHANNEL_ID="download_channel";
     public final static String COVER_SUFFIX="_cover.jpg";
+    public final static String HEADER_FAIL_TS="failTs";
 }

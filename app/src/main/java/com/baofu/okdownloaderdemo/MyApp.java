@@ -36,7 +36,7 @@ public class MyApp extends Application {
                     .readTimeOut(20)
                     .writeTimeOut(20)
                     .retryCount(2)
-                    .concurrentCount(2) //并发数
+                    .concurrentCount(3) //并发数
                     .context(this)
                     .saveCover(true)
                     .openDb(true)

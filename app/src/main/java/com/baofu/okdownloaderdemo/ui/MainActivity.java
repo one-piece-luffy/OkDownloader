@@ -49,10 +49,11 @@ public class MainActivity extends AppCompatActivity {
     VideoTaskItem mVideoTaskItem;
     String cover="https://img2.baidu.com/it/u=1853150649,4204942553&fm=253&app=138&f=JPEG?w=800&h=1422";
 //    String link="https://k.sinaimg.cn/n/sinakd20109/243/w749h1094/20240308/f34c-5298fe3ef2a79c143e236cac22d1b819.jpg/w700d1q75cms.jpg";
-//    String link="https://wwzycdn.10cong.com/20250602/mGny805C/index.m3u8";//短剧
+    String link="https://wwzycdn.10cong.com/20250719/3cWYkrFI/index.m3u8";//短剧
 //    String link="https://bfikuncdn.com/20250608/GFr5gwxA/index.m3u8";//微短剧
 
-    String link="https://c1.rrcdnbf2.com/video/langkexing/%E7%AC%AC10%E9%9B%86/index.m3u8";
+    String msj="https://v.cdnlz22.com/20250720/20060_354bcdcf/index.m3u8";//牧神记
+    String fanren="https://p.b8bf.com/video/fanrenxiuxianchuan/%E7%AC%AC152%E9%9B%86/index.m3u8";//凡人修仙
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+
         dataBinding.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -96,39 +98,17 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
 
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
-                            PermissionUtil.asArray(Manifest.permission.POST_NOTIFICATIONS),
-                            (granted, isAlwaysDenied) -> {
-                                if (granted) {
-                                    startDownload();
-                                } else {
-                                    if (isAlwaysDenied) {
-                                        Toast.makeText(MainActivity.this,"权限申请失败，请设置中修改",Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(MainActivity.this,"权限申请失败",Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startDownload();
-                } else {
-                    PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
-                            PermissionUtil.asArray(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE),
-                            (granted, isAlwaysDenied) -> {
-                                if (granted) {
-                                    startDownload();
-                                } else {
-                                    if (isAlwaysDenied) {
-                                        Toast.makeText(MainActivity.this,"权限申请失败，请设置中修改",Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(MainActivity.this,"权限申请失败",Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-                }
+                preDownload("凡人修仙",link);
+//                preDownload("牧神记",msj);
 
 
+            }
+        });
+        dataBinding.fix.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mVideoTaskItem.setIsCompleted(false);
+                VideoDownloadManager.getInstance().startDownload2(mVideoTaskItem);
             }
         });
 
@@ -188,12 +168,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    public void preDownload(String name, String url) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
+                    PermissionUtil.asArray(Manifest.permission.POST_NOTIFICATIONS),
+                    (granted, isAlwaysDenied) -> {
+                        if (granted) {
+                            startDownload(name, url);
+                        } else {
+                            if (isAlwaysDenied) {
+                                Toast.makeText(MainActivity.this, "权限申请失败，请设置中修改", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(MainActivity.this, "权限申请失败", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startDownload(name, url);
+        } else {
+            PermissionUtil.getInstance().request(MainActivity.this, "请求权限",
+                    PermissionUtil.asArray(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE),
+                    (granted, isAlwaysDenied) -> {
+                        if (granted) {
+                            startDownload(name, url);
+                        } else {
+                            if (isAlwaysDenied) {
+                                Toast.makeText(MainActivity.this, "权限申请失败，请设置中修改", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(MainActivity.this, "权限申请失败", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        }
+    }
 
-    public void startDownload(){
+    public void startDownload(String name,String url){
 
 
-        VideoTaskItem item = new VideoTaskItem(link);
-        item.mName = "图片";
+        VideoTaskItem item = new VideoTaskItem(url);
+        item.mName = name;
         item.mCoverUrl = cover;
 
         item.setFileName(item.mName);
@@ -215,27 +228,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        VideoDownloadManager.getInstance().setGlobalDownloadListener(mListener);
     }
 
     private DownloadListener mListener = new DownloadListener() {
         public void onDownloadDefault(VideoTaskItem item) {
-            Log.e("asdf",  "onDownloadDefault: "+ item.mName );
 //            notifyChanged(item);
         }
 
         public void onDownloadPending(VideoTaskItem item) {
-            Log.e("asdf", "onDownloadPending:"+ item.mName );
 //            notifyChanged(item);
         }
 
         public void onDownloadPrepare(VideoTaskItem item) {
-            Log.e("asdf", "onDownloadPrepare: "+ item.mName );
 //            notifyChanged(item);
         }
 
         public void onDownloadStart(VideoTaskItem item) {
-            Log.e("asdf", "onDownloadStart: " + item.mName + " " + item.getUrl());
 //            notifyChanged(item);
         }
 
@@ -268,7 +277,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void onDownloadPause(VideoTaskItem item) {
-            Log.e("asdf", "onDownloadPause: " + item.mName + " " + item.getUrl());
 //            notifyChanged(item);
         }
 

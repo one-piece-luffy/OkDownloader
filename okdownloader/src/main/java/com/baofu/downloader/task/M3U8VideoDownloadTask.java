@@ -45,6 +45,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -155,8 +156,38 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             @Override
             public void run() {
                 float length = 0;
+                String[] failArr=null;
+
+                //检查是否有下载失败的ts，有就重新下载
+                Map<String, String> myHeader = VideoDownloadUtils.getTaskHeader(mTaskItem);
+                if (myHeader != null && myHeader.containsKey(VideoDownloadConstants.HEADER_FAIL_TS)) {
+                    String s= myHeader.get(VideoDownloadConstants.HEADER_FAIL_TS);
+                    if (s != null) {
+                        failArr =s.split(",");
+                    }
+                }
                 for (int index = 0; index < mTotalTs; index++) {
                     final M3U8Seg ts = mTsList.get(index);
+
+                    boolean isFail = false;
+                    if (failArr != null) {
+                        for (String s : failArr) {
+                            int position = Integer.parseInt(s);
+                            if (index == position) {
+                                isFail = true;
+                                break;
+
+                            }
+                        }
+                    }
+                    if (isFail) {
+                        Log.e(TAG,mTaskItem.mName+" fail ts:"+index);
+                        continue;
+                    }
+
+
+
+
                     File tempTsFile = new File(mSaveDir, ts.getIndexName());
                     if (tempTsFile.exists()) {
                         if (tempTsFile.length() > 0) {
@@ -341,13 +372,30 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             int activeCount = tpe.getActiveCount();
                             long completedTaskCount = tpe.getCompletedTaskCount();
                             long taskCount = tpe.getTaskCount();
-                            Log.e(TAG, "下载失败的ts数量: " + mErrorTsCont.get());
                             Log.e(TAG, mTaskItem.mName+" 待修复当前排队线程数：" + queueSize + " 待修复当前活动线程数：" + activeCount + " 待修复执行完成线程数：" + completedTaskCount + " 待修复总线程数：" + taskCount);
                         } catch (Exception e) {
                             Log.e(TAG, "发生异常: ", e);
                         }
 
                     }
+                }
+                StringBuilder builder=new StringBuilder();
+                for (int index = 0; index < mTotalTs; index++) {
+                    final M3U8Seg ts = mTsList.get(index);
+                    if(ts.failed){
+                        builder.append(index);
+                        builder.append(",");
+                    }
+                }
+                String failTs=builder.toString();
+                if(!TextUtils.isEmpty(failTs)){
+                    Map<String, String> header = VideoDownloadUtils.getTaskHeader(mTaskItem);
+                    if (header == null) {
+                        header = new HashMap<>();
+                    }
+                    header.put(VideoDownloadConstants.HEADER_FAIL_TS, failTs);
+                    mTaskItem.header = VideoDownloadUtils.mapToJsonString(header);
+                    Log.e(TAG,mTaskItem.mName+" fail ts:"+failTs);
                 }
 
 
@@ -812,7 +860,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         contentLength = tsInitSegmentFile.length();
                     } else if (!sizeSimilar(contentLength, tsInitSegmentFile.length())) {
                         String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
-                        Log.e("asdfg", log);
+                        Log.e(TAG, log);
                         onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception(log));
                         return;
 
@@ -865,7 +913,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         contentLength = file.length();
                     } else if (!sizeSimilar(contentLength, file.length())) {
                         String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
-                        Log.e("asdfg", log);
+                        Log.e(TAG, log);
                         onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception(log));
                         return;
 
@@ -1063,7 +1111,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             return true;
         } else {
 //            System.out.println("两个文件大小相差超过10KB");
-//            Log.e("asdfg","两个文件大小相差:"+difference);
+//            Log.e(TAG,"两个文件大小相差:"+difference);
             return false;
         }
     }
