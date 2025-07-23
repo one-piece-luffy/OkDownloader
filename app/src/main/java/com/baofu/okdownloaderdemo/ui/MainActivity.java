@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Log.e("asdf","filepath:"+m3u8Path);
                 String mp4Path= VideoDownloadManager.getInstance().mConfig.publicPath + File.separator +name + ".mp4";
-                FFmpegUtils.covertM3u8ToMp4(m3u8Path, mp4Path, new IFFmpegCallback() {
+                FFmpegUtils.covertM3u8ToMp4(m3u8Path, mp4Path, null,new IFFmpegCallback() {
                     @Override
                     public void onSuc() {
                         if (isFinishing() || isDestroyed()) {

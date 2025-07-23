@@ -76,7 +76,7 @@ public class VideoInfoParserManager {
                     dir.mkdir();
                 }
 
-                M3U8Utils.createRemoteM3U8(dir, m3u8);
+                M3U8Utils.createRemoteM3U8(dir, m3u8,headers);
                 if ( m3u8.getTsList() != null && m3u8.getTsList().size() > 0) {
                     long duration=0;
                     for(int i=0;i<m3u8.getTsList().size();i++){
@@ -129,7 +129,7 @@ public class VideoInfoParserManager {
             return;
         }
         try {
-            M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(remoteM3U8File);
+            M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(remoteM3U8File,VideoDownloadUtils.getTaskHeader(taskItem));
             callback.onM3U8FileParseSuccess(taskItem, m3u8);
         } catch (Exception e) {
             e.printStackTrace();

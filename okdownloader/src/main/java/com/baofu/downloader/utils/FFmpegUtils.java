@@ -14,12 +14,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 public class FFmpegUtils {
     /**
      * 利用ffmpeg将m3u8合成mp4
      */
-    public static void covertM3u8ToMp4(String m3u8FilePath, String outputPath, IFFmpegCallback callback) {
+    public static void covertM3u8ToMp4(String m3u8FilePath, String outputPath, Map<String,String>header,IFFmpegCallback callback) {
 
 
         // 构建FFmpeg命令
@@ -48,7 +49,7 @@ public class FFmpegUtils {
 //                        callback.onFail();
 //                    }
 //                    notifyDownloadError(new Exception("m3u8合并失败"));
-                        doMerge(m3u8FilePath, outputPath, callback);
+                        doMerge(m3u8FilePath, outputPath, header,callback);
 
                     }
                     // CALLED WHEN SESSION IS EXECUTED
@@ -58,7 +59,7 @@ public class FFmpegUtils {
 
         } catch (Exception e) {
             e.printStackTrace();
-            doMerge(m3u8FilePath, outputPath, callback);
+            doMerge(m3u8FilePath, outputPath,header, callback);
         }
 
     }
@@ -67,7 +68,7 @@ public class FFmpegUtils {
      * 将m3u8合成mp4
      * 直接将ts拼接成mp4
      */
-    public static void doMerge(String m3u8FilePath, String outputPath, IFFmpegCallback callback) {
+    public static void doMerge(String m3u8FilePath, String outputPath, Map<String,String>header, IFFmpegCallback callback) {
 
         DownloadExecutor.execute(new Runnable() {
             @Override
@@ -88,7 +89,7 @@ public class FFmpegUtils {
                 }
                 try {
                     File m3u8File = new File(m3u8FilePath);
-                    M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(m3u8File);
+                    M3U8 m3u8 = M3U8Utils.parseLocalM3U8File(m3u8File,header);
                     if (m3u8.getTsList() == null || m3u8.getTsList().isEmpty()) {
                         if (callback != null) {
                             callback.onFail();

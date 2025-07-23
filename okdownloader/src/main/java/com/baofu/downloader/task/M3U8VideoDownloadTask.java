@@ -314,7 +314,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     }
                     executorService = null;
                     //限制并发量
-                    executorService = Executors.newFixedThreadPool(2);
+                    executorService = Executors.newFixedThreadPool(3);
                     for (int index = 0; index < mTotalTs; index++) {
                         final M3U8Seg ts = mTsList.get(index);
                         if(ts.success){
@@ -459,7 +459,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 //            mergeFile = new File(mSaveDir, fileName);
 //        }
 
-        FFmpegUtils.covertM3u8ToMp4(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), new IFFmpegCallback() {
+        FFmpegUtils.covertM3u8ToMp4(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), VideoDownloadUtils.getTaskHeader(mTaskItem),new IFFmpegCallback() {
             @Override
             public void onSuc() {
                 if (!mTaskItem.privateFile) {
@@ -496,7 +496,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 
 
 
-        FFmpegUtils.doMerge(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(), new IFFmpegCallback() {
+        FFmpegUtils.doMerge(localM3U8File.getAbsolutePath(), mergeFile.getAbsolutePath(),VideoDownloadUtils.getTaskHeader(mTaskItem), new IFFmpegCallback() {
             @Override
             public void onSuc() {
                 if (!mTaskItem.privateFile) {
@@ -856,7 +856,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     foutc = fos.getChannel();
                     foutc.transferFrom(rbc, 0, Long.MAX_VALUE);
 
-                    if (contentLength == 0) {
+                    if (contentLength <= 0) {
                         contentLength = tsInitSegmentFile.length();
                     } else if (!sizeSimilar(contentLength, tsInitSegmentFile.length())) {
                         String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
@@ -909,7 +909,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     fos = new FileOutputStream(file);
                     foutc = fos.getChannel();
                     foutc.transferFrom(rbc, 0, Long.MAX_VALUE);
-                    if (contentLength == 0) {
+                    if (contentLength <= 0) {
                         contentLength = file.length();
                     } else if (!sizeSimilar(contentLength, file.length())) {
                         String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
@@ -921,7 +921,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 }
 
 
-                if (contentLength == 0) {
+                if (contentLength <= 0) {
                     onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("file length = 0 or code=" + responseCode));
                 } else {
                     ts.setContentLength(contentLength);
