@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     String msj="https://v.cdnlz22.com/20250720/20060_354bcdcf/index.m3u8";//牧神记
     String fanren="https://p.b8bf.com/video/fanrenxiuxianchuan/%E7%AC%AC152%E9%9B%86/index.m3u8";//凡人修仙
+    String jinxiu="https://vodcnd011.myrqsb.com/20250704/nQ7ckJjH/index.m3u8";//锦绣芳华
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
 
                 }
-                preDownload("凡人修仙",link);
+                preDownload("锦绣芳华",jinxiu);
 //                preDownload("牧神记",msj);
 
 
@@ -211,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
 
         item.setFileName(item.mName);
         Map<String,String> header=new HashMap<>();
-        header.put("user-agent","Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1");
+        header.put("user-agent","Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36");
 //                header.put("Range","bytes=0-14188543");
 //        header.put("referer",link);
         item.header= VideoDownloadUtils.mapToJsonString(header);

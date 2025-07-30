@@ -19,6 +19,7 @@ public class M3U8Seg implements Comparable<M3U8Seg> {
     private String mKeyIV;                       //加密的IV
     private boolean mIsMessyKey;                 //当前加密key是否是乱码
     private long mContentLength;                 //分片的Content-Length
+    public long origonContentLength;
     private int mRetryCount;                     //分片的请求重试次数
     private boolean mHasInitSegment;             //分片前是否有#EXT-X-MAP
     private String mInitSegmentUri;              //MAP的url

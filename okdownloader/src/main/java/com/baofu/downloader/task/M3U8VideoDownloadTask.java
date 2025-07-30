@@ -846,6 +846,19 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                 long contentLength = response.body().contentLength();
                 long fileLength = 0;
 
+                if (contentLength <= 0) {
+                    String strLen = response.header("Content-Length");
+                    try {
+                        contentLength = Long.parseLong(strLen);
+                    } catch (Exception e) {
+                        Log.e(TAG, "", e);
+                    }
+                }
+                ts.origonContentLength = contentLength;
+                if (contentLength <= 0 && ts.getRetryCount() == 0) {
+                    onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("content length:" + contentLength));
+                    return;
+                }
                 byte[] encryptionKey = ts.encryptionKey == null ? mM3U8.encryptionKey : ts.encryptionKey;
                 String iv = ts.encryptionKey == null ? mM3U8.encryptionIV : ts.getKeyIV();
                 if (VideoDownloadManager.getInstance().mConfig.decryptM3u8 && encryptionKey != null) {
@@ -914,7 +927,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     if (contentLength <= 0) {
                         contentLength = file.length();
                     } else if (!sizeSimilar(contentLength, fileLength)) {
-                        String log=file.getName() + " file length:" + file.length() + " content length:" + contentLength;
+                        String log = file.getName() + " file length:" + file.length() + " content length:" + contentLength;
                         Log.e(TAG, log);
                         onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception(log));
                         return;
@@ -1127,7 +1140,8 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
 //                bfw.write(M3U8Constants.TAG_TARGET_DURATION + ":" + mM3U8.getTargetDuration() + "\n");
 
                 for (M3U8Seg m3u8Ts : mTsList) {
-                    bfw.write(M3U8Constants.TAG_MEDIA_DURATION + ":" + m3u8Ts.getContentLength() + "|" + m3u8Ts.getTsSize() + ",\n");
+                    bfw.write(M3U8Constants.TAG_MEDIA_DURATION + ":" + m3u8Ts.getContentLength() + "|" + m3u8Ts.getTsSize()
+                            + "|" + m3u8Ts.origonContentLength + "|" + m3u8Ts.getRetryCount() + ",\n");
                     bfw.write(mSaveDir.getAbsolutePath() + File.separator + m3u8Ts.getIndexName());
                     bfw.newLine();
                 }
