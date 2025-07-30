@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
 
                 }
-                preDownload("锦绣芳华",jinxiu);
+                preDownload("锦绣芳华",link);
 //                preDownload("牧神记",msj);
 
 
