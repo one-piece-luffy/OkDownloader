@@ -57,7 +57,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
-    implementation 'com.github.one-piece-luffy:ffmpeg-kit:6.0.2'
+//    implementation 'com.github.one-piece-luffy:ffmpeg-kit:6.0.2'
 
     // 数据库
     implementation "androidx.room:room-runtime:2.6.1"

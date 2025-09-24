@@ -1,10 +1,5 @@
 package com.baofu.downloader.utils;
 
-import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.FFmpegSession;
-import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback;
-import com.arthenica.ffmpegkit.ReturnCode;
-import com.arthenica.ffmpegkit.SessionState;
 import com.baofu.downloader.listener.IFFmpegCallback;
 import com.baofu.downloader.m3u8.M3U8;
 import com.baofu.downloader.m3u8.M3U8Seg;
@@ -24,43 +19,43 @@ public class FFmpegUtils {
 
 
         // 构建FFmpeg命令
-        String command = "-i '"+m3u8FilePath+ "' -c copy '" +outputPath+"'";
-//        Log.e("asdf", "ffmeg command: "+command);
-
-
-        try {
-            // 执行FFmpeg命令
-            FFmpegKit.executeAsync(command, new FFmpegSessionCompleteCallback() {
-
-                @Override
-                public void apply(FFmpegSession session) {
-                    SessionState state = session.getState();
-                    ReturnCode returnCode = session.getReturnCode();
-//                    Log.e("asdf", String.format("============FFmpeg process exited with state %s and rc %s.%s", state, returnCode, session.getFailStackTrace()));
-
-                    if (returnCode.isValueSuccess()) {
-                        // 命令执行成功
-                        if (callback != null) {
-                            callback.onSuc();
-                        }
-                    } else {
-                        // 命令执行失败
-//                    if (callback != null) {
-//                        callback.onFail();
+//        String command = "-i '"+m3u8FilePath+ "' -c copy '" +outputPath+"'";
+////        Log.e("asdf", "ffmeg command: "+command);
+//
+//
+//        try {
+//            // 执行FFmpeg命令
+//            FFmpegKit.executeAsync(command, new FFmpegSessionCompleteCallback() {
+//
+//                @Override
+//                public void apply(FFmpegSession session) {
+//                    SessionState state = session.getState();
+//                    ReturnCode returnCode = session.getReturnCode();
+////                    Log.e("asdf", String.format("============FFmpeg process exited with state %s and rc %s.%s", state, returnCode, session.getFailStackTrace()));
+//
+//                    if (returnCode.isValueSuccess()) {
+//                        // 命令执行成功
+//                        if (callback != null) {
+//                            callback.onSuc();
+//                        }
+//                    } else {
+//                        // 命令执行失败
+////                    if (callback != null) {
+////                        callback.onFail();
+////                    }
+////                    notifyDownloadError(new Exception("m3u8合并失败"));
+//                        doMerge(m3u8FilePath, outputPath, header,callback);
+//
 //                    }
-//                    notifyDownloadError(new Exception("m3u8合并失败"));
-                        doMerge(m3u8FilePath, outputPath, header,callback);
-
-                    }
-                    // CALLED WHEN SESSION IS EXECUTED
-
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            doMerge(m3u8FilePath, outputPath,header, callback);
-        }
+//                    // CALLED WHEN SESSION IS EXECUTED
+//
+//                }
+//            });
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            doMerge(m3u8FilePath, outputPath,header, callback);
+//        }
 
     }
 
