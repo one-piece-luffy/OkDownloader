@@ -50,7 +50,7 @@ public class DownloadNotificationUtil {
                         .setSound(null) //设置静音
                         .setContentText("0%") //设置内容
                         .setProgress(100, 0, false) //设置进度条
-                        .setContentIntent(NotificationBuilderManager.createIntent(context, null, item.notificationId)); //设置点击事件
+                        .setContentIntent(NotificationBuilderManager.createIntent(context, null, item.notificationId,item.action)); //设置点击事件
                 NotificationBuilderManager.map.put(item.notificationId, builder);
             }
             notificationManager.notify(item.notificationId, builder.build());

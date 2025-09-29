@@ -98,6 +98,9 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     //只在wifi下下载
     @Ignore
     public boolean onlyWifi;
+    //自定义通知跳转Intent的action
+    @Ignore
+    public String action;
 
 
     public static class Columns {

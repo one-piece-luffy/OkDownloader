@@ -42,7 +42,7 @@ public class NotificationBuilderManager {
             NotificationCompat.Builder builder = map.get(item.notificationId);
             if (builder == null)
                 return;
-            builder.setContentIntent(createIntent(context, bundle,item.notificationId)); //设置点击事件
+            builder.setContentIntent(createIntent(context, bundle,item.notificationId,item.action)); //设置点击事件
             if (item.getPercent() >= 0) {
                 builder.setContentText((int)item.getPercent() + "%");
                 builder.setProgress(100, (int) item.getPercent(), false);
@@ -82,8 +82,8 @@ public class NotificationBuilderManager {
      *
      * @return 点击事件
      */
-    public static PendingIntent createIntent(Context context, Bundle bundle, int notificationId) {
-        Intent intent = new Intent("main");
+    public static PendingIntent createIntent(Context context, Bundle bundle, int notificationId,String action) {
+        Intent intent = new Intent(action);
         intent.setPackage(context.getPackageName());
         if (bundle != null) {
             intent.putExtras(bundle);
