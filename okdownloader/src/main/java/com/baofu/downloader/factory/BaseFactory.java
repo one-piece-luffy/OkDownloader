@@ -51,6 +51,7 @@ public abstract class BaseFactory implements IDownloadFactory {
     long mFileLength;
     String eTag;
     boolean chunked;
+    //分段下载
     boolean supportBreakpoint;
     volatile boolean pause;//是否暂停
     volatile boolean cancel;//是否取消下载
@@ -132,9 +133,12 @@ public abstract class BaseFactory implements IDownloadFactory {
                     return;
                 }
 
-                // 是否支持断点续传
-                String acceptRanges = response.header("Accept-Ranges");
-                supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
+                if (mTaskItem.supportBreakpoint) {
+                    // 是否支持断点续传
+                    String acceptRanges = response.header("Accept-Ranges");
+                    supportBreakpoint = "bytes".equalsIgnoreCase(acceptRanges);
+                }
+
                 eTag = response.header("ETag");
 //            Log.i(TAG, "是否支持断点续传：" + supportBreakpoint);
 //            Log.i(TAG, "ETag：" + eTag);

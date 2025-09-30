@@ -55,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
     String msj="https://v.cdnlz22.com/20250720/20060_354bcdcf/index.m3u8";//牧神记
     String fanren="https://p.b8bf.com/video/fanrenxiuxianchuan/%E7%AC%AC152%E9%9B%86/index.m3u8";//凡人修仙
     String jinxiu="https://vodcnd011.myrqsb.com/20250704/nQ7ckJjH/index.m3u8";//锦绣芳华
-    String dongxiaojie="https://github.com/one-piece-luffy/one-piece-luffy.github.io/blob/main/zhuiju/zhuiju_tv.apk";//董小姐每天都过情人节
+    String dongxiaojie="https://github.com/one-piece-luffy/one-piece-luffy.github.io/raw/main/zhuiju/zhuiju_tv.apk";//董小姐每天都过情人节
+    String apk="https://raw.githubusercontent.com/one-piece-luffy/one-piece-luffy.github.io/main/zhuiju/zhuiju_tv.apk";//董小姐每天都过情人节
 
 //    String link2="https://svipsvip.ffzy-online5.com/20241219/36281_d4d2775c/2000k/hls/mixed.m3u8";
     @Override
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
 
                 }
-                preDownload("dong",dongxiaojie);
+                preDownload("dong",apk);
 //                preDownload("牧神记",msj);
 
 

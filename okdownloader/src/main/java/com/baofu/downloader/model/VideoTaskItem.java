@@ -101,6 +101,9 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     //自定义通知跳转Intent的action
     @Ignore
     public String action;
+    //分段下载
+    @Ignore
+    public boolean supportBreakpoint = true;
 
 
     public static class Columns {
