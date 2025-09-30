@@ -63,7 +63,7 @@ public class AllDownloadTask extends VideoDownloadTask {
     private void notifyDownloadProgress(long progress,long total,boolean hasFileLength) {
         mTotalLength=total;
         float p = progress * 1.0f * 100 / total;
-        Log.e(TAG, "===cur:" + progress + " total:" + total + " pencent:" + p);
+//        Log.e(TAG, "===cur:" + progress + " total:" + total + " pencent:" + p);
         if(!isDownloading.get()){
             return;
         }

@@ -52,7 +52,7 @@ public class NotificationBuilderManager {
             return;
         }
 //        Log.d("notify", "===curTime:"+curTime+" last:"+lastTime);
-        Log.d("notify", "===notify:" + item.getPercent());
+//        Log.d("notify", "===notify:" + item.getPercent());
         try {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             NotificationCompat.Builder builder = map.get(item.notificationId);
