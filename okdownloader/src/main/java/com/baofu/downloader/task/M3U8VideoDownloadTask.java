@@ -780,12 +780,12 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
         float percent = mCurTs.get() * 1.0f * 100 / mTotalTs;
         if (!VideoDownloadUtils.isFloatEqual(percent, mPercent) && mCurrentDownloaddSize.get() > mLastCachedSize) {
             long nowTime = System.currentTimeMillis();
-            mSpeed = (mCurrentDownloaddSize.get() - mLastCachedSize)   / ((nowTime - mLastInvokeTime)/1000f);
+            mSpeed = (mCurrentDownloaddSize.get() - mLastCachedSize)   / ((nowTime - mLastInvokeTime.get())/1000f);
             mDownloadTaskListener.onTaskProgressForM3U8(percent, mCurrentDownloaddSize.get(), mCurTs.get(), mTotalTs, mSpeed);
             mPercent = percent;
 
             mLastCachedSize = mCurrentDownloaddSize.get();
-            mLastInvokeTime = nowTime;
+            mLastInvokeTime.set(nowTime);
             Log.i(TAG, mTaskItem.mName+" m3u8  cur:" + mCurTs + " error count:" + mErrorTsCont + " mTotalTs:" + mTotalTs);
 
         }

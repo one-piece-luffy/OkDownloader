@@ -16,6 +16,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import okhttp3.Response;
 
@@ -35,7 +37,7 @@ public abstract class VideoDownloadTask {
     protected IDownloadTaskListener mDownloadTaskListener;
     protected long mLastCachedSize = 0L;
     protected long mCurrentCachedSize = 0L;
-    protected long mLastInvokeTime = 0L;
+    final AtomicLong mLastInvokeTime = new AtomicLong(0);
     protected float mSpeed = 0.0f;
     protected float mPercent = 0.01f;
     protected float maxSpeed = 0;

@@ -16,7 +16,9 @@ import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class AllDownloadTask extends VideoDownloadTask {
@@ -27,7 +29,8 @@ public class AllDownloadTask extends VideoDownloadTask {
 
     private final int THREAD_COUNT = 5;//线程数
 
-    private volatile boolean isDownloading = false;
+//    private volatile boolean isDownloading = false;
+    final AtomicBoolean isDownloading = new AtomicBoolean(false);
     IDownloadFactory downloadFactory;
     IFactoryListener iFactoryListener=new IFactoryListener() {
         @Override
@@ -59,6 +62,11 @@ public class AllDownloadTask extends VideoDownloadTask {
 
     private void notifyDownloadProgress(long progress,long total,boolean hasFileLength) {
         mTotalLength=total;
+        float p = progress * 1.0f * 100 / total;
+        Log.e(TAG, "===cur:" + progress + " total:" + total + " pencent:" + p);
+        if(!isDownloading.get()){
+            return;
+        }
         if (progress >= total) {
             mDownloadTaskListener.onTaskProgress(100, total, total, mSpeed);
             mPercent = 100.0f;
@@ -66,17 +74,19 @@ public class AllDownloadTask extends VideoDownloadTask {
         } else {
             long nowTime = System.currentTimeMillis();
             float percent = progress * 1.0f * 100 / total;
-            if ((hasFileLength && !VideoDownloadUtils.isFloatEqual(percent, mPercent) && nowTime - mLastInvokeTime >= 100) ||
-                    (!hasFileLength && nowTime - mLastInvokeTime >= 1000)) {
+            if ((hasFileLength && !VideoDownloadUtils.isFloatEqual(percent, mPercent) && nowTime - mLastInvokeTime.get() >= 100) ||
+                    (!hasFileLength && nowTime - mLastInvokeTime.get() >= 1000)) {
 //                Log.i(TAG, "cur:" + progress + " mLastCachedSize:" + mLastCachedSize + " total:" + mTotalLength + " pencent:" + percent);
-                if (progress > mLastCachedSize && nowTime > progress) {
-                    mSpeed = (progress - mLastCachedSize) * 1000 * 1.0f / ((nowTime - mLastInvokeTime));
+                if (progress > mLastCachedSize && nowTime > mLastInvokeTime.get()) {
+                    mSpeed = (progress - mLastCachedSize) * 1000 * 1.0f / ((nowTime - mLastInvokeTime.get()));
                 }
 //                7677884
                 mDownloadTaskListener.onTaskProgress(percent, progress, total, mSpeed);
                 mPercent = percent;
-                mLastInvokeTime = nowTime;
+                mLastInvokeTime.set(nowTime);
                 mLastCachedSize = progress;
+            }else{
+
             }
 
         }
@@ -100,7 +110,7 @@ public class AllDownloadTask extends VideoDownloadTask {
         e.printStackTrace();
         Log.e("asdf", "error url:" + mTaskItem.getUrl());
         Log.e("asdf", "error message:" + e.getMessage());
-        isDownloading = false;
+        isDownloading.set(false);
         mDownloadTaskListener.onTaskProgress(100, mTotalLength, mTotalLength, VideoDownloadConstants.ERROR_SPEED);
     }
 
@@ -119,7 +129,7 @@ public class AllDownloadTask extends VideoDownloadTask {
 
     @Override
     public void startDownload() {
-        isDownloading = false;
+        isDownloading.set(false);
         mDownloadTaskListener.onTaskStart(mTaskItem.getUrl());
 
         start();
@@ -171,9 +181,8 @@ public class AllDownloadTask extends VideoDownloadTask {
     public synchronized void start() {
         try {
 //            Log.e(TAG, "start: " + isDownloading + "\t" + mTaskItem.getUrl());
-            if (isDownloading) return;
-            isDownloading = true;
-
+            if (isDownloading.get()) return;
+            isDownloading.set(true);
             if (mTaskItem.privateFile) {
                 downloadFactory = new Android9Factory(mTaskItem, mSaveDir, iFactoryListener);
                 downloadFactory.download();
@@ -211,7 +220,7 @@ public class AllDownloadTask extends VideoDownloadTask {
      * 重置下载状态
      */
     private void resetStutus() {
-        isDownloading = false;
+        isDownloading.set(false);
     }
 
     /**
@@ -225,7 +234,7 @@ public class AllDownloadTask extends VideoDownloadTask {
     }
 
     public boolean isDownloading() {
-        return isDownloading;
+        return isDownloading.get();
     }
 
 
