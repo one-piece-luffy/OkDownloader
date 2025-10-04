@@ -570,6 +570,8 @@ public class VideoDownloadManager {
                         bundle.putString("m3u8_filepath", taskItem.mM3u8FilePath);
                         bundle.putString("play_name", taskItem.mName);
                         bundle.putString("sourceUrl", taskItem.sourceUrl);
+                        bundle.putInt("position", taskItem.sort);
+                        bundle.putString("groupId", taskItem.groupId);
                         taskItem.message = "done";
                         if(taskItem.notify){
                             NotificationBuilderManager.getInstance().updateNotification(VideoDownloadManager.getInstance().mConfig.context,bundle,taskItem);

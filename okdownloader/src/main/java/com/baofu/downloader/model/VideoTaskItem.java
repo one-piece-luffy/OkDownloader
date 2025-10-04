@@ -98,9 +98,9 @@ public class VideoTaskItem implements Cloneable, Parcelable {
     //只在wifi下下载
     @Ignore
     public boolean onlyWifi;
-    //自定义通知跳转Intent的action
+    //自定义通知跳转Intent的scheme
     @Ignore
-    public String action;
+    public String scheme;
     //分段下载
     @Ignore
     public boolean supportBreakpoint = true;
@@ -475,6 +475,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         intent.putExtra("notificationId", notificationId);
         intent.putExtra("groupId", groupId);
         intent.putExtra("header", header);
+        intent.putExtra("scheme", scheme);
     }
     public static VideoTaskItem getItemByIntent(Intent intent){
         if(intent==null){
@@ -496,6 +497,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.downloadGroup=intent.getStringExtra("downloadGroup");
         item.privateFile=intent.getBooleanExtra("privateFile",false);
         item.groupId=intent.getStringExtra("groupId");
+        item.scheme=intent.getStringExtra("scheme");
         item.notificationId=intent.getIntExtra("notificationId",0);
         item.sort=intent.getIntExtra("sort",0);
         String headerJson=intent.getStringExtra("header");
@@ -520,6 +522,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
                 .putBoolean("privateFile", privateFile)
                 .putInt("sort", sort)
                 .putString("downloadGroup", downloadGroup)
+                .putString("scheme", scheme)
                 .putInt("notificationId", notificationId)
                 .putString("groupId", groupId)
                 .putString("header", header)
@@ -545,6 +548,7 @@ public class VideoTaskItem implements Cloneable, Parcelable {
         item.overwrite=workData.getBoolean("overwrite",false);
         item.method=workData.getString("method");
         item.downloadGroup=workData.getString("downloadGroup");
+        item.scheme=workData.getString("scheme");
         item.privateFile=workData.getBoolean("privateFile",false);
         item.onlyWifi=workData.getBoolean("onlyWify",false);
         item.groupId=workData.getString("groupId");

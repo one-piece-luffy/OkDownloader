@@ -64,9 +64,9 @@ public class AllDownloadTask extends VideoDownloadTask {
         mTotalLength=total;
         float p = progress * 1.0f * 100 / total;
 //        Log.e(TAG, "===cur:" + progress + " total:" + total + " pencent:" + p);
-        if(!isDownloading.get()){
-            return;
-        }
+//        if(!isDownloading.get()){
+//            return;
+//        }
         if (progress >= total) {
             mDownloadTaskListener.onTaskProgress(100, total, total, mSpeed);
             mPercent = 100.0f;
