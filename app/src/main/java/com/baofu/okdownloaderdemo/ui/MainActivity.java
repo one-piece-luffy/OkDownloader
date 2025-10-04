@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     dialog.show();
 
                 }
-                preDownload("dong",apk);
+                preDownload("dong",link2);
 //                preDownload("牧神记",msj);
 
 
