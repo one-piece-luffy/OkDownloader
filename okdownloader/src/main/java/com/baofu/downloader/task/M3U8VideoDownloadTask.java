@@ -898,6 +898,21 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                             //解密后文件的大小和content-length不一致，所以直接赋值为文件大小
                             fileLength = contentLength = file.length();
                         }
+
+                        if (AES128Utils.decryptFile(tsInitSegmentFile, file, encryptionKey, iv)) {
+                            contentLength = file.length();
+                        } else {
+                            // 解密失败处理
+                            // aes解密失败,这里的失败不用重试，重试也是失败
+                            ts.failed = true;
+                            ts.setRetryCount(ts.getRetryCount()+1);
+                            mErrorTsCont.incrementAndGet();
+                            String err = "aes dencryption  fail";
+                            if (errMsgMap.size() < MAX_ERR_MAP_COUNT) {
+                                errMsgMap.put(err, err);
+                            }
+                        }
+
                     } catch (Exception e) {
                         Log.e(TAG, "发生异常: ", e); 
                         ts.setRetryCount(ts.getRetryCount() + 1);
