@@ -12,10 +12,8 @@ import android.util.Log;
 
 import androidx.work.Constraints;
 import androidx.work.Data;
-import androidx.work.ForegroundInfo;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import com.baofu.downloader.VideoDownloadQueue;
@@ -99,15 +97,13 @@ public class VideoDownloadManager {
         mDownloadListener.put(url, listener);
     }
 
+
+    private static class Holder {
+        private static final VideoDownloadManager INSTANCE = new VideoDownloadManager();
+    }
+
     public static VideoDownloadManager getInstance() {
-        if (sInstance == null) {
-            synchronized (VideoDownloadManager.class) {
-                if (sInstance == null) {
-                    sInstance = new VideoDownloadManager();
-                }
-            }
-        }
-        return sInstance;
+        return Holder.INSTANCE;
     }
 
     private VideoDownloadManager() {
@@ -735,12 +731,12 @@ public class VideoDownloadManager {
             try {
                 VideoStorageUtils.delete(privateFile);
             } catch (Exception e) {
-                Log.e(TAG, "发生异常: ", e); 
+                Log.e(TAG, "发生异常: ", e);
             }
             try {
                 VideoStorageUtils.delete(publicFile);
             } catch (Exception e) {
-                Log.e(TAG, "发生异常: ", e); 
+                Log.e(TAG, "发生异常: ", e);
             }
 
             VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.getFilePath());
@@ -752,7 +748,7 @@ public class VideoDownloadManager {
                     VideoStorageUtils.delete(m3u8.getParentFile());
                 }
             } catch (Exception e) {
-                Log.e(TAG, "发生异常: ", e); 
+                Log.e(TAG, "发生异常: ", e);
             }
             VideoDownloadUtils.deleteFile(VideoDownloadManager.getInstance().mConfig.context, taskItem.mCoverPath);
 

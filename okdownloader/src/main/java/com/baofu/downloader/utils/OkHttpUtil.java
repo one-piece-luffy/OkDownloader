@@ -16,11 +16,13 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.cache.CacheInterceptor;
 
 
 /**
@@ -242,7 +244,18 @@ public class OkHttpUtil {
                 .writeTimeout(VideoDownloadManager.getInstance().mConfig.getReadTimeOut(), TimeUnit.SECONDS)
                 .readTimeout(VideoDownloadManager.getInstance().mConfig.getWriteTimeOut(), TimeUnit.SECONDS);
         //创建连接池，优化Connection reset出现的问题
-        builder.connectionPool(new ConnectionPool(5,10,TimeUnit.MINUTES));
+        ConnectionPool pool = new ConnectionPool(
+                10,  // 最大空闲连接数
+                5,   // 空闲连接存活时间
+                TimeUnit.MINUTES
+        );
+        builder.connectionPool(pool);
+
+        Dispatcher dispatcher = new Dispatcher();
+        dispatcher.setMaxRequests(64);           // 最大并发请求数
+        dispatcher.setMaxRequestsPerHost(10);    // 每个Host最大并发
+        builder.dispatcher(dispatcher);
+
         builder.addInterceptor(new RedirectInterceptor());
         //使用 HTTP/2 优化Connection reset出现的问题
         builder.protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
@@ -251,6 +264,7 @@ public class OkHttpUtil {
         builder.hostnameVerifier(SSLUtil.getInstance().getHostnameVerifier());
 
         mOkHttpClient = builder.build();
+
     }
 
     public interface RequestCallback{
