@@ -17,6 +17,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -40,19 +41,42 @@ public class OkHttpUtil {
         String POST="post";
     }
 
-    final Object mQueueLock = new Object();
+
+    private boolean isValidUrl(String url) {
+        if (TextUtils.isEmpty(url)) {
+            return false;
+        }
+        // 基础前缀校验
+        if (!url.startsWith("http") ) {
+            return false;
+        }
+        // 解析URL确保格式合法
+        try {
+            HttpUrl.parse(url);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
     /**
      * @param url        下载链接
      * @param method      get/post
      * @param requestCallback   回调
      */
     public void request(String url,String method, Map<String,String> header, RequestCallback requestCallback) throws IOException {
-        if (TextUtils.isEmpty(url) || !url.startsWith("http")) {
+        if (isValidUrl(url)) {
             if (requestCallback != null) {
                 requestCallback.onFailure(new Exception("url not start http"));
             }
             return;
         }
+        // 解析URL确保格式合法
+        try {
+            HttpUrl.parse(url);
+        } catch (Exception e) {
+            return ;
+        }
+
         if (header == null) {
             header = new ConcurrentHashMap<>();
         }
@@ -71,7 +95,7 @@ public class OkHttpUtil {
 
     }
     public Response requestSync(String url,String method,Map<String,String> header)   {
-        if (TextUtils.isEmpty(url) || !url.startsWith("http")) {
+        if (isValidUrl(url)) {
             return null;
         }
         if (header == null) {
@@ -109,20 +133,18 @@ public class OkHttpUtil {
     }
     private  Request.Builder getBuilder(Map<String,String> header) {
         Request.Builder okBuilder = new Request.Builder();
-        synchronized (mQueueLock){
-            if (header != null) {
-                for (Map.Entry<String, String> entry : header.entrySet()) {
-                    if (entry == null)
-                        continue;
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    if (TextUtils.isEmpty(key) || TextUtils.isEmpty(value)) {
-                        continue;
-                    }
-                    okBuilder.addHeader(key, value);
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                if (entry == null)
+                    continue;
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (TextUtils.isEmpty(key) || TextUtils.isEmpty(value)) {
+                    continue;
                 }
-
+                okBuilder.addHeader(key, value);
             }
+
         }
 
 
@@ -221,18 +243,19 @@ public class OkHttpUtil {
         return call.execute();
     }
 
-
+    private static class LazyHolder {
+        private static final OkHttpUtil INSTANCE = new OkHttpUtil();
+    }
     /**
      * @return HttpUtil实例对象
      */
     public static OkHttpUtil getInstance() {
-        synchronized (OkHttpClient.class) {
-            if (null == mInstance) {
-                mInstance = new OkHttpUtil();
-            }
-        }
-        return mInstance;
+        return LazyHolder.INSTANCE;
     }
+
+
+
+
 
     /**
      * 构造方法,配置OkHttpClient
@@ -241,8 +264,8 @@ public class OkHttpUtil {
         //创建okHttpClient对象
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .connectTimeout(VideoDownloadManager.getInstance().mConfig.getConnTimeOut(), TimeUnit.SECONDS)
-                .writeTimeout(VideoDownloadManager.getInstance().mConfig.getReadTimeOut(), TimeUnit.SECONDS)
-                .readTimeout(VideoDownloadManager.getInstance().mConfig.getWriteTimeOut(), TimeUnit.SECONDS);
+                .writeTimeout(VideoDownloadManager.getInstance().mConfig.getWriteTimeOut(), TimeUnit.SECONDS)
+                .readTimeout(VideoDownloadManager.getInstance().mConfig.getReadTimeOut(), TimeUnit.SECONDS);
         //创建连接池，优化Connection reset出现的问题
         ConnectionPool pool = new ConnectionPool(
                 10,  // 最大空闲连接数
