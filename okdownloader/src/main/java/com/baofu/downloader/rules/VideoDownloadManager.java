@@ -590,7 +590,7 @@ public class VideoDownloadManager {
 
     private void notifyError(VideoTaskItem taskItem,Exception e){
         if(e!=null){
-            Log.e(TAG,"notify err:"+e.getMessage());
+            Log.e(TAG,"下载错误 notify err:"+e.getMessage());
         }
         int errorCode = DownloadExceptionUtils.getErrorCode(e);
         taskItem.setErrorCode(errorCode);

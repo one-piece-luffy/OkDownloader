@@ -64,7 +64,7 @@ public class OkHttpUtil {
      * @param requestCallback   回调
      */
     public void request(String url,String method, Map<String,String> header, RequestCallback requestCallback) throws IOException {
-        if (isValidUrl(url)) {
+        if (!isValidUrl(url)) {
             if (requestCallback != null) {
                 requestCallback.onFailure(new Exception("url not start http"));
             }
@@ -95,7 +95,7 @@ public class OkHttpUtil {
 
     }
     public Response requestSync(String url,String method,Map<String,String> header)   {
-        if (isValidUrl(url)) {
+        if (!isValidUrl(url)) {
             return null;
         }
         if (header == null) {
