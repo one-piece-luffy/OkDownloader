@@ -1065,7 +1065,8 @@ public class VideoDownloadManager {
     private void markDownloadProgressInfoUpdateEvent(VideoTaskItem taskItem) {
         if(mConfig.openDb){
             long currentTime = System.currentTimeMillis();
-            if (taskItem.getLastUpdateTime() + 1000 < currentTime) {
+            //改为2秒更新一次，减少io操作
+            if (taskItem.getLastUpdateTime() + 2000 < currentTime) {
                 taskItem.setLastUpdateTime(currentTime);
                 WorkerThreadHandler.submitRunnableTask(() -> mVideoDatabaseHelper.markDownloadProgressInfoUpdateEvent(taskItem));
 
