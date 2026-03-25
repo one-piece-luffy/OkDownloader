@@ -52,7 +52,7 @@ public class AES128Utils {
             return false;
         }
 
-        if (key.length != 16) {
+        if (key.length %16!=0) {
             Log.e(TAG, "Key length must be 16 bytes, but got " + key.length);
             return false;
         }

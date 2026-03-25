@@ -15,36 +15,41 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DownloadExecutor {
 
-    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
-    private static final int CORE_POOL_SIZE = 1;
-    private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 4 + 5;
-    private static final int KEEP_ALIVE = 1;
-    private static final BlockingQueue<Runnable> sPoolWorkQueue =
-            new LinkedBlockingQueue<>();
 
-    private static final ThreadFactory sThreadFactory = new ThreadFactory() {
-        private final AtomicInteger mCount = new AtomicInteger(0);
-
-        public Thread newThread(Runnable r) {
-            return new Thread(r, "DownloadExecutor #" + mCount.getAndIncrement());
-        }
-    };
-
-    private static final ExecutorService mExecutorService = new ThreadPoolExecutor(MAXIMUM_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
-                                                                                TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory);
-//    private static final ExecutorService mExecutorService = new ThreadPoolExecutor(MAXIMUM_POOL_SIZE, MAXIMUM_POOL_SIZE, 3L, TimeUnit.SECONDS, new ArrayBlockingQueue(MAXIMUM_POOL_SIZE),
-//            sThreadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
-//    private static final ExecutorService mExecutorService = new ThreadPoolExecutor(MAXIMUM_POOL_SIZE, MAXIMUM_POOL_SIZE, 60L, TimeUnit.SECONDS, new ArrayBlockingQueue(MAXIMUM_POOL_SIZE),
-//            sThreadFactory);
-//    private static final ExecutorService mExecutorService = new ThreadPoolExecutor(20, Integer.MAX_VALUE,
-//        60L, TimeUnit.SECONDS,
-//        new SynchronousQueue<Runnable>());
-
+    /**
+     * 执行网络下载任务
+     * @deprecated 请使用 {@link ThreadPoolManager#executeNetwork(Runnable)}
+     */
+    @Deprecated
     public static void execute(Runnable runnable) {
-        mExecutorService.execute(runnable);
+        ThreadPoolManager.getInstance().executeNetwork(runnable);
     }
 
-    public static ExecutorService getExecutorService() {
-        return mExecutorService;
+    /**
+     * 执行网络下载任务（推荐使用）
+     */
+    public static void executeNetwork(Runnable runnable) {
+        ThreadPoolManager.getInstance().executeNetwork(runnable);
+    }
+
+    /**
+     * 执行磁盘IO任务
+     */
+    public static void executeDisk(Runnable runnable) {
+        ThreadPoolManager.getInstance().executeDisk(runnable);
+    }
+
+    /**
+     * 执行CPU计算任务
+     */
+    public static void executeCpu(Runnable runnable) {
+        ThreadPoolManager.getInstance().executeCpu(runnable);
+    }
+
+    /**
+     * 获取线程池管理器实例
+     */
+    public static ThreadPoolManager getThreadPoolManager() {
+        return ThreadPoolManager.getInstance();
     }
 }

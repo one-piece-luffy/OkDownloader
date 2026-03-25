@@ -2,8 +2,10 @@ package com.baofu.okdownloaderdemo;
 
 import android.app.Application;
 import android.os.Environment;
+import android.util.Log;
 
 import com.baofu.downloader.common.DownloadMode;
+import com.baofu.downloader.utils.ThreadPoolManager;
 import com.baofu.downloader.utils.VideoDownloadConfig;
 import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.VideoStorageUtils;
@@ -47,6 +49,11 @@ public class MyApp extends Application {
                     .downloadMode(DownloadMode.DEFAULT)
                     .build();
             VideoDownloadManager.getInstance().initConfig(config);
+
+            // 可选：设置线程池任务数量监听
+            ThreadPoolManager.getInstance().setOnTaskCountChangeListener(activeCount -> {
+                Log.e("Download", "Active tasks: " + activeCount);
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

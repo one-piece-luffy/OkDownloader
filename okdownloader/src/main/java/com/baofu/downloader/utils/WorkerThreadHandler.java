@@ -2,31 +2,20 @@ package com.baofu.downloader.utils;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Process;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.FutureTask;
 
+/**
+ * 工作线程处理器
+ * 优化后使用统一的线程池管理器
+ */
 public class WorkerThreadHandler {
 
     private static final String TAG = "WorkerThreadHandler";
 
-    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
-    private static final int CORE_POOL_SIZE = CPU_COUNT + 1;
-    private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
-    private static final int KEEP_ALIVE = 1;
-
-    private static final BlockingQueue<Runnable> S_THREAD_POOL_WORK_QUEUE = new LinkedBlockingQueue<Runnable>();
-    private static final ExecutorService S_THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE,
-            TimeUnit.SECONDS, S_THREAD_POOL_WORK_QUEUE, new MediaWorkerThreadFactory(), new ThreadPoolExecutor.DiscardOldestPolicy());
-
-    //sdk中唯一的主线程handler
+    // 主线程Handler
     private static Handler sMainHandler = new Handler(Looper.getMainLooper());
 
     public static Handler getMainHandler() {
@@ -36,6 +25,7 @@ public class WorkerThreadHandler {
     public static void runOnUiThread(Runnable r) {
         runOnUiThread(r, 0);
     }
+
     public static void runOnUiThread(Runnable r, int delayTime) {
         if (delayTime > 0) {
             sMainHandler.postDelayed(r, delayTime);
@@ -50,32 +40,22 @@ public class WorkerThreadHandler {
         return sMainHandler.getLooper() == Looper.myLooper();
     }
 
-    private static class MediaWorkerThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable r) {
-            return new MediaWorkerThread(r);
-        }
+    /**
+     * 提交后台任务（使用统一线程池）
+     * 返回Future用于跟踪任务状态
+     */
+    public static Future<?> submitRunnableTask(Runnable task) {
+        FutureTask<Void> futureTask = new FutureTask<Void>(task, null);
+        ThreadPoolManager.getInstance().executeCpu(futureTask);
+        return futureTask;
     }
 
-    private static class MediaWorkerThread extends Thread {
-        public MediaWorkerThread(Runnable r) {
-            super(r, "video_download_worker_pool_thread");
-        }
-
-        @Override
-        public void run() {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            long startTime = System.currentTimeMillis();
-            super.run();
-            long endTime = System.currentTimeMillis();
-            LogUtils.i(TAG, "MediaWorkerThread execution time: " + (endTime - startTime));
-        }
-    }
-
-    public static Future submitCallbackTask(Callable task) {
-        return S_THREAD_POOL_EXECUTOR.submit(task);
-    }
-
-    public static Future submitRunnableTask(Runnable task) {
-        return S_THREAD_POOL_EXECUTOR.submit(task);
+    /**
+     * 提交带返回值的后台任务
+     */
+    public static <T> Future<T> submitCallbackTask(Callable<T> task) {
+        FutureTask<T> futureTask = new FutureTask<T>(task);
+        ThreadPoolManager.getInstance().executeCpu(futureTask);
+        return futureTask;
     }
 }
