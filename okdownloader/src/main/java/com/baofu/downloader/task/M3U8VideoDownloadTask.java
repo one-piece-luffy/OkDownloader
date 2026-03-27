@@ -606,7 +606,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             }
 
             if (response != null && response.isSuccessful()) {
-                ts.setRetryCount(0);
+
                 inputStream = response.body().byteStream();
                 long contentLength = response.body().contentLength();
                 long fileLength = 0;
@@ -650,7 +650,7 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     // 直接在当前线程执行解密（已经在子线程中）
                     boolean decryptSuccess = false;
                     try {
-                        decryptSuccess = AES128Utils.decryptFile(tsInitSegmentFile, file, encryptionKey, iv);
+                        decryptSuccess = AES128Utils.decryptFileStream(tsInitSegmentFile, file, encryptionKey, iv);
                     } catch (Exception e) {
                         Log.e(TAG, "Decryption error", e);
                         decryptSuccess = false;
@@ -664,10 +664,12 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         onDownloadFileErr(ts, file, videoUrl, responseCode, new Exception("Decryption failed"));
                         return;
                     }
-
+                    //下载成功才重置重试次数，不然如果解密失败会一直循环
+                    ts.setRetryCount(0);
                     fileLength = contentLength = file.length();
 
                 } else {
+
                     // 不需要解密的TS，直接写入
                     rbc = Channels.newChannel(inputStream);
                     fos = new FileOutputStream(file);
@@ -683,6 +685,8 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                         return;
 
                     }
+                    //下载成功才重置重试次数
+                    ts.setRetryCount(0);
                 }
 
 
@@ -735,8 +739,19 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
             Log.e(TAG, "Task cancelled, skip retry: " + file.getName());
             return;
         }
+        // 清理可能损坏的文件
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            Log.d(TAG, "Deleted corrupted file: " + file.getName() + ", success=" + deleted);
+        }
 
+        // 清理临时文件
+        File tempFile = new File(file.getParent(), file.getName() + ".temp");
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
         ts.setRetryCount(ts.getRetryCount() + 1);
+
         if (responseCode == HttpUtils.RESPONSE_503 || responseCode == HttpUtils.RESPONSE_429) {
             if (ts.getRetryCount() <= MAX_RETRY_COUNT_503) {
                 int ran = 4000 + (int) (Math.random() * 20000);
@@ -746,21 +761,27 @@ public class M3U8VideoDownloadTask extends VideoDownloadTask {
                     throw new RuntimeException(e);
                 }
                 downloadFile(ts, file, videoUrl);
+            }else {
+                markAsFailed(ts,file,exception);
             }
         } else if (ts.getRetryCount() <= VideoDownloadManager.getInstance().mConfig.retryCount) {
             Log.e(TAG, "retry1   responseCode=" + responseCode + " msg:" + exception.getMessage() + "  ts:" + ts.getUrl() + " " + file.getName() + " count:" + ts.getRetryCount());
             downloadFile(ts, file, videoUrl);
         } else {
             Log.e(TAG, "error   responseCode=" + responseCode + " msg:" + exception.getMessage() + "  ts:" + ts.getUrl() + " " + file.getName() + " count:" + ts.getRetryCount());
-            ts.failed = true;
-            mErrorTsCont.incrementAndGet();
-            String err = exception.getMessage();
-            if (errMsgMap.size() < MAX_ERR_MAP_COUNT) {
-                errMsgMap.put(err, err);
-            }
+            markAsFailed(ts,file,exception);
         }
     }
+    private void markAsFailed(M3U8Seg ts, File file, Exception exception) {
+        Log.e(TAG, "下载失败，已达最大重试次数: " + file.getName() + ", 错误: " + exception.getMessage());
+        ts.failed = true;
+        mErrorTsCont.incrementAndGet();
 
+        String err = exception.getMessage();
+        if (errMsgMap.size() < MAX_ERR_MAP_COUNT) {
+            errMsgMap.put(err, err);
+        }
+    }
     private boolean sizeSimilar(long size1, long size2) {
         long difference = Math.abs(size1 - size2);
         return difference <= SIZE_THRESHOLD;

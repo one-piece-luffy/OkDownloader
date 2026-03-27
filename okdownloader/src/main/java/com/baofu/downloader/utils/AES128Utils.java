@@ -38,6 +38,89 @@ public class AES128Utils {
     private static final String DEFAULT_ALGORITHM = "AES";
     private static final int BUFFER_SIZE = 8192; // 8KB缓冲区，可调
 
+
+    /**
+     * 流式解密文件（优化版：使用大缓冲区 + NIO）
+     * 返回 false + 删除不完整文件
+     */
+    public static boolean decryptFileStream(File inputFile, File outputFile, byte[] key, String iv) {
+        if (inputFile == null || !inputFile.exists() || key == null) {
+            Log.e(TAG, "Invalid parameters for decryption");
+            return false;
+        }
+
+        if (key.length != 16) {
+            Log.e(TAG, "Key length must be 16 bytes, but got " + key.length);
+            return false;
+        }
+
+        try {
+            Cipher cipher = prepareCipher(key, iv, Cipher.DECRYPT_MODE);
+            if (cipher == null) {
+                return false;
+            }
+
+            File parentDir = outputFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                if (!parentDir.mkdirs()) {
+                    Log.e(TAG, "Failed to create output directory");
+                    return false;
+                }
+            }
+
+            // 根据文件大小和可用内存动态调整缓冲区
+            int bufferSize = getOptimalDecryptBufferSize(inputFile.length());
+            //使用try-with-resources避免手动close
+            try (FileInputStream fis = new FileInputStream(inputFile);
+                 BufferedInputStream bis = new BufferedInputStream(fis, bufferSize);
+                 CipherInputStream cis = new CipherInputStream(bis, cipher);
+                 FileOutputStream fos = new FileOutputStream(outputFile);
+                 BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize)) {
+
+                byte[] buffer = new byte[bufferSize];
+                int bytesRead;
+                while ((bytesRead = cis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, bytesRead);
+                }
+                bos.flush();
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Decryption failed", e);
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * 获取最优的解密缓冲区大小
+     */
+    private static int getOptimalDecryptBufferSize(long fileSize) {
+//        Runtime runtime = Runtime.getRuntime();
+//        long freeMemory = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+//
+//        // 基础缓冲区大小
+//        int baseSize = 64 * 1024;  // 64KB
+//
+//        // 对于小文件，使用较小的缓冲区
+//        if (fileSize < 1024 * 1024) {  // < 1MB
+//            return 16 * 1024;  // 16KB
+//        }
+//
+//        // 根据剩余内存调整
+//        if (freeMemory > 100 * 1024 * 1024) {  // 剩余内存 > 100MB
+//            return 256 * 1024;  // 256KB - 更高性能
+//        } else if (freeMemory > 50 * 1024 * 1024) {  // 剩余内存 > 50MB
+//            return 128 * 1024;  // 128KB
+//        } else {
+//            return baseSize;  // 64KB
+//        }
+        return 64 * 1024;  // 64KB
+    }
     /**
      * 流式解密文件（避免OOM）
      * @param inputFile  待解密的文件
@@ -124,7 +207,6 @@ public class AES128Utils {
             closeQuietly(fis);
         }
     }
-
     /**
      * 分块解密（适用于网络流）
      * @param data 待解密的数据块
