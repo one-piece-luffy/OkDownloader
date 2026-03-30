@@ -12,13 +12,12 @@ import com.baofu.downloader.factory.Android9Factory;
 import com.baofu.downloader.factory.IDownloadFactory;
 import com.baofu.downloader.listener.IFactoryListener;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.utils.DownloadExecutor;
+import com.baofu.downloader.utils.ThreadPoolManager;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 public class AllDownloadTask extends VideoDownloadTask {
@@ -199,14 +198,15 @@ public class AllDownloadTask extends VideoDownloadTask {
             File coverFile = new File(mSaveDir, mTaskItem.mName+VideoDownloadConstants.COVER_SUFFIX);
             if (VideoDownloadManager.getInstance().mConfig.saveCover && (!coverFile.exists() || coverFile.length() == 0)) {
                 //下载封面
-                DownloadExecutor.execute(() -> {
+                ThreadPoolManager.getInstance().executeDisk(() -> {
                     try {
                         downloadCover(coverFile, mTaskItem.mCoverUrl);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
-            } 
+
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

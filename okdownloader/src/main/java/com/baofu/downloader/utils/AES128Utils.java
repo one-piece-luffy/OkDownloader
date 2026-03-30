@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -43,51 +44,75 @@ public class AES128Utils {
      * 流式解密文件（优化版：使用大缓冲区 + NIO）
      * 返回 false + 删除不完整文件
      */
+    // AES128Utils.java - 增强版解密方法
+
     public static boolean decryptFileStream(File inputFile, File outputFile, byte[] key, String iv) {
-        if (inputFile == null || !inputFile.exists() || key == null) {
-            Log.e(TAG, "Invalid parameters for decryption");
+        if (inputFile == null || !inputFile.exists()) {
+            Log.e(TAG, "Input file does not exist");
             return false;
         }
 
-        if (key.length != 16) {
-            Log.e(TAG, "Key length must be 16 bytes, but got " + key.length);
+        if (key == null || key.length != 16) {
+            Log.e(TAG, "Invalid key, length=" + (key == null ? "null" : key.length));
             return false;
+        }
+
+        // 验证文件大小
+        long fileSize = inputFile.length();
+        if (fileSize == 0) {
+            Log.e(TAG, "Input file is empty");
+            return false;
+        }
+
+        // AES-CBC 要求数据长度是 16 的倍数
+        if (fileSize % 16 != 0) {
+            Log.w(TAG, "File size not multiple of 16: " + fileSize + ", might need padding handling");
+            // 某些加密方案可能不是严格的 16 倍数，继续尝试
         }
 
         try {
             Cipher cipher = prepareCipher(key, iv, Cipher.DECRYPT_MODE);
             if (cipher == null) {
+                Log.e(TAG, "Failed to prepare cipher");
                 return false;
             }
 
+            // 创建输出目录
             File parentDir = outputFile.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
-                if (!parentDir.mkdirs()) {
-                    Log.e(TAG, "Failed to create output directory");
-                    return false;
-                }
+                parentDir.mkdirs();
             }
 
-            // 根据文件大小和可用内存动态调整缓冲区
-            int bufferSize = getOptimalDecryptBufferSize(inputFile.length());
-            //使用try-with-resources避免手动close
+            // 使用 try-with-resources
             try (FileInputStream fis = new FileInputStream(inputFile);
-                 BufferedInputStream bis = new BufferedInputStream(fis, bufferSize);
+                 BufferedInputStream bis = new BufferedInputStream(fis, 64 * 1024);
                  CipherInputStream cis = new CipherInputStream(bis, cipher);
                  FileOutputStream fos = new FileOutputStream(outputFile);
-                 BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize)) {
+                 BufferedOutputStream bos = new BufferedOutputStream(fos, 64 * 1024)) {
 
-                byte[] buffer = new byte[bufferSize];
+                byte[] buffer = new byte[64 * 1024];
                 int bytesRead;
+                long totalDecrypted = 0;
+
                 while ((bytesRead = cis.read(buffer)) != -1) {
                     bos.write(buffer, 0, bytesRead);
+                    totalDecrypted += bytesRead;
                 }
                 bos.flush();
+
+                // 验证解密后的文件不为空
+                if (totalDecrypted == 0) {
+                    Log.e(TAG, "Decryption produced empty output");
+                    outputFile.delete();
+                    return false;
+                }
+
+                Log.i(TAG, "Decrypted successfully: " + inputFile.getName() +
+                        " (" + fileSize + " -> " + totalDecrypted + " bytes)");
+                return true;
             }
 
-            return true;
-
-        } catch (Exception e) {
+        }  catch (Exception e) {
             Log.e(TAG, "Decryption failed", e);
             if (outputFile.exists()) {
                 outputFile.delete();

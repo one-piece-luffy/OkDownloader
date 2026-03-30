@@ -13,10 +13,10 @@ import com.baofu.downloader.listener.IFactoryListener;
 import com.baofu.downloader.m3u8.M3U8Utils;
 import com.baofu.downloader.model.VideoTaskItem;
 import com.baofu.downloader.rules.VideoDownloadManager;
-import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.HttpUtils;
 import com.baofu.downloader.utils.MimeType;
 import com.baofu.downloader.utils.OkHttpUtil;
+import com.baofu.downloader.utils.ThreadPoolManager;
 import com.baofu.downloader.utils.VideoDownloadUtils;
 import com.baofu.downloader.utils.VideoStorageUtils;
 
@@ -432,7 +432,7 @@ public abstract class BaseFactory implements IDownloadFactory {
 
     @Override
     public void download() {
-        DownloadExecutor.execute(() -> {
+        ThreadPoolManager.getInstance().executeNetwork(() -> {
             pause = false;
             cancel = false;
 

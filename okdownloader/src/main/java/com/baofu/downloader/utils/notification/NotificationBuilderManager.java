@@ -80,7 +80,7 @@ public class NotificationBuilderManager {
             }
             if (item.getTaskState() == VideoTaskState.ERROR) {
                 if (TextUtils.isEmpty(item.message)) {
-                    builder.setContentText((int) item.getPercent() + "%");
+                    builder.setContentText("error");
                 } else {
                     builder.setContentText(item.message);
                 }

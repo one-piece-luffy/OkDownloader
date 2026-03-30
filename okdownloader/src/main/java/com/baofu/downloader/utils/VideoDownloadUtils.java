@@ -238,7 +238,7 @@ public class VideoDownloadUtils {
     public static void deleteFile(Context context, String filePath) {
         if (TextUtils.isEmpty(filePath))
             return;
-        DownloadExecutor.execute(() -> {
+        ThreadPoolManager.getInstance().executeDisk(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 Cursor cursor = null;
                 try {

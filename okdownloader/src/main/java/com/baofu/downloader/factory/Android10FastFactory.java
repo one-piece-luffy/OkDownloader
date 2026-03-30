@@ -3,8 +3,6 @@ package com.baofu.downloader.factory;
 import static android.os.Environment.DIRECTORY_DOWNLOADS;
 import static com.baofu.downloader.common.VideoDownloadConstants.DOWNLOAD_TYPE_ALL;
 import static com.baofu.downloader.common.VideoDownloadConstants.DOWNLOAD_TYPE_RANGE;
-import static com.baofu.downloader.common.VideoDownloadConstants.MAX_RETRY_COUNT_503;
-import static com.baofu.downloader.utils.OkHttpUtil.NO_SPACE;
 import static com.baofu.downloader.utils.OkHttpUtil.URL_INVALID;
 import static com.baofu.downloader.utils.VideoDownloadUtils.close;
 
@@ -20,17 +18,11 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.listener.IFactoryListener;
 import com.baofu.downloader.model.VideoTaskItem;
-import com.baofu.downloader.utils.DownloadExecutor;
-import com.baofu.downloader.utils.HttpUtils;
-import com.baofu.downloader.utils.MimeType;
+import com.baofu.downloader.rules.VideoDownloadManager;
 import com.baofu.downloader.utils.OkHttpUtil;
 import com.baofu.downloader.utils.VideoDownloadUtils;
-import com.baofu.downloader.utils.VideoStorageUtils;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -42,15 +34,9 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Response;

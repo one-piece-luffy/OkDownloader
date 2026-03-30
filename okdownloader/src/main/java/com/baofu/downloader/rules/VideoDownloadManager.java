@@ -37,10 +37,10 @@ import com.baofu.downloader.task.M3U8VideoDownloadTask;
 import com.baofu.downloader.task.VideoDownloadTask;
 import com.baofu.downloader.utils.ContextUtils;
 import com.baofu.downloader.utils.DownloadExceptionUtils;
-import com.baofu.downloader.utils.DownloadExecutor;
 import com.baofu.downloader.utils.DownloadWorker;
 import com.baofu.downloader.utils.LogUtils;
 import com.baofu.downloader.utils.OkHttpUtil;
+import com.baofu.downloader.utils.ThreadPoolManager;
 import com.baofu.downloader.utils.UniqueIdGenerator;
 import com.baofu.downloader.utils.VideoDownloadConfig;
 import com.baofu.downloader.utils.VideoDownloadUtils;
@@ -263,7 +263,7 @@ public class VideoDownloadManager {
     }
 
     private void parseNetworkVideoInfo(final VideoTaskItem taskItem) {
-        DownloadExecutor.execute(new Runnable() {
+        ThreadPoolManager.getInstance().executeNetwork(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -299,7 +299,7 @@ public class VideoDownloadManager {
                             }
                             VideoDownloadUtils.close(bufferedReader, reader);
                         } catch (Exception e) {
-                            Log.e(TAG, "发生异常: ", e); 
+                            Log.e(TAG, "发生异常: ", e);
                         }
 
                     }
@@ -348,7 +348,7 @@ public class VideoDownloadManager {
                         startBaseVideoDownloadTask(taskItem);
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "发生异常: ", e); 
+                    Log.e(TAG, "发生异常: ", e);
 //                    try {
 //                        for (Call call : OkHttpUtil.getInstance().mOkHttpClient.dispatcher().queuedCalls()) {
 //                            if (taskItem.getUrl().equals(call.request().url().url().toString())) {

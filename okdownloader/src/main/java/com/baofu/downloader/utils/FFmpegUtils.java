@@ -64,8 +64,7 @@ public class FFmpegUtils {
      * 直接将ts拼接成mp4
      */
     public static void doMerge(String m3u8FilePath, String outputPath, Map<String,String>header, IFFmpegCallback callback) {
-
-        DownloadExecutor.execute(new Runnable() {
+        ThreadPoolManager.getInstance().executeDisk(new Runnable() {
             @Override
             public void run() {
                 byte[] mMp4Header = null;
